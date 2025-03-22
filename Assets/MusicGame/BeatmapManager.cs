@@ -46,6 +46,7 @@ public class BeatmapManager : MonoBehaviour
     public GameObject AutoPlayImage;
     public GameObject RelaxModImage;
     public Animator ShowFrontVideo;
+    public Animator MapInfo;
 
     // 谱面信息展示
     public RawImage DisplayInfoImage;
@@ -323,7 +324,7 @@ public class BeatmapManager : MonoBehaviour
             place_pos.z = (remain_beats[0].beat_time + iniOffset) * Player.GetComponent<Player>().GetVelocity();
             place_pos.x = (float)((remain_beats[0].track - 2) * 3);
             for(int i = remain_beats[0].rem_stack;i < remain_beats[0].stack; i++){
-                place_pos.y = i * 2;
+                place_pos.y = i * 2 * remain_beats[0].size;
                 GameObject obs;
                 switch(remain_beats[0].type){
                     case (int)B_TYPE.BEAT_TYPE: {
@@ -374,6 +375,7 @@ public class BeatmapManager : MonoBehaviour
         }
         if(isEnd && !isSaved){
             ResultCanvas.SetActive(true);
+            MapInfo.SetTrigger("ResultTrigger");
             if(!isAutoPlay && !DataStorager.settings.relaxMod){
                 SaveResult();
             }
@@ -411,7 +413,7 @@ public class BeatmapManager : MonoBehaviour
             }
         }
         if(ready_to_change_hidden){
-            if(OnPlayingTime - BeforeTime >= should_change_bpm_time){
+            if(OnPlayingTime - BeforeTime >= should_change_hidden_time){
                 ShowFrontVideo.SetBool("ShowBool",!ShowFrontVideo.GetBool("ShowBool"));
                 ready_to_change_hidden = false;
             }
@@ -423,9 +425,9 @@ public class BeatmapManager : MonoBehaviour
             }
             // 先判断是不是需要大跳
             if(auto_remain_beats[0].stack > 1 && Player.GetComponent<Player>().GetPos().y < 0.01f){
-                float jump_should_remain_time = (float)Math.Sqrt(Math.Pow(2,(int)Math.Log(auto_remain_beats[0].stack,2) + 1) * 2 / Player.GetComponent<Player>().GetGravity());
+                float jump_should_remain_time = (float)Math.Sqrt(Math.Pow(2,(int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size,2) + 1) * 2 / Player.GetComponent<Player>().GetGravity());
                 if(Player.GetComponent<Player>().GetPos().z / Player.GetComponent<Player>().GetVelocity() + jump_should_remain_time - autoShift > auto_remain_beats[0].beat_time + iniOffset){
-                    int jump_times = (int)Math.Log(auto_remain_beats[0].stack,2);
+                    int jump_times = (int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size,2);
                     for(int k = 0;k < jump_times; k++){
                         Player.GetComponent<Player>().moveUp();
                     }

@@ -253,16 +253,18 @@ public class Player : MonoBehaviour
                 };
                 movementList.Add(movement);
             }
-            if (touch.phase == TouchPhase.Ended)
+            if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Ended)
             {
 
                 for(int k = 0; k < movementList.Count; k++){
                     FromTo movement = movementList[k];
                     if(movement.fingerId == touch.fingerId){
                         movement.second = touch.position;
-                        CalcAndResponse(movement);
-                        movementList.RemoveAt(k);
-                        k--;
+                        if(Vector2.Distance(movement.first,movement.second) > 25 || touch.phase == TouchPhase.Ended){
+                            CalcAndResponse(movement);
+                            movementList.RemoveAt(k);
+                            k--;
+                        }
                     }
                 }
             }
@@ -294,6 +296,7 @@ public class Player : MonoBehaviour
 
     void moveToIndex(int index){
         now_track = index;
+        CreateNewInputImpluse(now_track);
         toMoving = true;
     }
 
