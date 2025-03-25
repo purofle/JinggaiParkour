@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -17,6 +21,8 @@ public class Settings : MonoBehaviour
     public Toggle notBoomFX;
     public Toggle RelaxMod;
     public InputField MusicGameOffsetMs;
+    public TMP_Dropdown SkinDropdown;
+    List<string> subfolders;
     void Awake(){
         MusicVolume.value = DataStorager.settings.MusicVolume;
         SoundVolume.value = DataStorager.settings.SoundVolume;
@@ -37,6 +43,20 @@ public class Settings : MonoBehaviour
             MusicGameSpeed.text = DataStorager.settings.MusicGameSpeed.ToString();
         } else {
             MusicGameSpeed.text = "1";
+        }
+
+        // 皮肤
+        string skinFolder = $"{Application.persistentDataPath}/skin";
+        string[] subfolderPaths = Directory.GetDirectories(skinFolder, "*", SearchOption.TopDirectoryOnly);
+        for(int i = 0;i < subfolderPaths.Count(); i++){
+            subfolderPaths[i] = Path.GetFileName(subfolderPaths[i]);
+        }
+        subfolders = new(subfolderPaths);
+        SkinDropdown.AddOptions(subfolders);
+        if(subfolders.Contains(DataStorager.settings.skinPath)){
+            SkinDropdown.value = subfolders.IndexOf(DataStorager.settings.skinPath) + 1;
+        } else {
+            SkinDropdown.value = 0;
         }
     }
 
@@ -87,6 +107,8 @@ public class Settings : MonoBehaviour
         {
             DataStorager.settings.offsetMs = coffset;
         }
+        // 皮肤
+        DataStorager.settings.skinPath = SkinDropdown.options[SkinDropdown.value].text;
         // 保存
         DataStorager.SaveSettings();
         globalSettings.handleSettings();
