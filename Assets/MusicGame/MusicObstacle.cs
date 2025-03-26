@@ -1,15 +1,17 @@
 using System;
+using System.Linq;
 using Lofelt.NiceVibrations;
 using UnityEngine;
 
 public class MusicObstacle : MonoBehaviour
 {
+
     private bool isTouched = false;
-    private bool isPerfect = false;
+    // private bool isPerfect = false;
     private bool isInit = true;
     private bool isLast = false;
     public bool isBest = false;
-    private float last_frame_pos_z = 0;
+    public int[] track;
     public GameObject player;
     public GameObject camera;
     public GameObject perfectboom;
@@ -53,65 +55,71 @@ public class MusicObstacle : MonoBehaviour
         beatmapManager.triggerEnd();
     }
 
+    bool isOnTrack() {
+        if(track.Contains(player.GetComponent<Player>().GetNowTrack())){
+            return true;
+        }
+        foreach(var inputImp in player.GetComponent<Player>().inputImpluses){
+            if(track.Contains(inputImp.track)){
+                player.GetComponent<Player>().inputImpluses.Remove(inputImp);
+                return true;
+            }
+        }
+        return false;
+    }
+
     // Update is called once per frame
     void FixedUpdate()
     {
         if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 2 * (player.GetComponent<Player>().GetVelocity() / 50)
-          && Math.Abs(player.transform.position.x - gameObject.transform.position.x) < 1
+          && isOnTrack()
           && Math.Abs(player.transform.position.y - gameObject.transform.position.y) < 2
         ){
             isTouched = true;
         }
         // 下落墩子也可以
-        if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 3 * (player.GetComponent<Player>().GetVelocity() / 50) && player.GetComponent<Player>().isDroping()
-            && Math.Abs(player.transform.position.x - gameObject.transform.position.x) < 0.1
+        if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 3.5 * (player.GetComponent<Player>().GetVelocity() / 50)
+            && player.GetComponent<Player>().isDroping()
+            && isOnTrack()
             && player.transform.position.y >= gameObject.transform.position.y
         ){
             isTouched = true;
-            if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 2 * (player.GetComponent<Player>().GetVelocity() / 50)){
-                isPerfect = true;
-            };
-        }
-        if( Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 1.5 * (player.GetComponent<Player>().GetVelocity() / 50)
-            && Math.Abs(player.transform.position.x - gameObject.transform.position.x) < 1
-            && Math.Abs(player.transform.position.y - gameObject.transform.position.y) < 1.5
-        ){
-            isPerfect = true;
         }
 
-        // 帧率过低的优化
-        if(player.transform.position.z >= gameObject.transform.position.z && player.transform.position.y < 0.1 && gameObject.transform.position.y < 1){
-            if(last_frame_pos_z < gameObject.transform.position.z){
-                if(Math.Abs(player.transform.position.x - gameObject.transform.position.x) < 0.1){
-                    isTouched = true;
-                    if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 1.5 * (player.GetComponent<Player>().GetVelocity() / 50)){
-                        isPerfect = true;
-                    };
-                }
-            }
-        }
-
-        if(player.transform.position.z >= gameObject.transform.position.z && isTouched && !isInit){
-            if(isPerfect){
+        if(player.transform.position.z >= gameObject.transform.position.z && isTouched && !isInit)
+        {
+            if(player.transform.position.z - gameObject.transform.position.z <= 1.25 * (player.GetComponent<Player>().GetVelocity() / 50)){
+                // Perfect
                 GenerateBoom(perfectboom);
                 beatmapManager.AddNowPoint(1);
                 if(isBest){
                     beatmapManager.AddNowBest(1);
                 }
+                if(isLast){
+                    triggerEnd();
+                }
+                Destroy(gameObject);
+                return;
             } else {
-                GenerateBoom(greatboom);
-                beatmapManager.AddNowPoint(0.95f);
-                if(isBest){
-                    beatmapManager.AddNowBest(0.95f);
+                // Great
+                {
+                    GenerateBoom(greatboom);
+                    beatmapManager.AddNowPoint(0.95f);
+                    if(isBest){
+                        beatmapManager.AddNowBest(0.95f);
+                    }
+                    if(isLast){
+                        triggerEnd();
+                    }
+                    Destroy(gameObject);
+                    return;
                 }
             }
-            if(isLast){
-                triggerEnd();
-            }
-            Destroy(gameObject);
-            return;
         }
-        if(player.transform.position.z - gameObject.transform.position.z > 10 && !isInit){
+
+
+        if(player.transform.position.z - gameObject.transform.position.z > 10 * (player.GetComponent<Player>().GetVelocity() / 50)
+            && !isInit){
             // GenerateBoom();
             beatmapManager.Miss();
             if(isLast){
@@ -120,6 +128,5 @@ public class MusicObstacle : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        last_frame_pos_z = player.transform.position.z;
     }
 }

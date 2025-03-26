@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static InputStruct;
 
 public class Player : MonoBehaviour
 {
@@ -24,6 +25,27 @@ public class Player : MonoBehaviour
     public float cross_time = MAX_CROSS_TIME;
     private bool isFlying = false;
     private List<FromTo> movementList = new();
+
+    public List<InputImpluse> inputImpluses = new();
+
+    void CreateNewInputImpluse(int num) {
+        inputImpluses.Add(
+            new InputImpluse(){
+                track = num,
+                time = Time.fixedTime
+            }
+        );
+    }
+
+    void inputUpdate() {
+        while(inputImpluses.Count > 0){
+            if(Time.fixedTime - inputImpluses[0].time <= 0.1){
+                break;
+            }
+            inputImpluses.RemoveAt(0);
+        }
+    }
+
     void Awake(){
         float speed = DataStorager.settings.MusicGameSpeed > 0 ? DataStorager.settings.MusicGameSpeed : 1;
         velocity.z = 50 * speed;
@@ -47,6 +69,7 @@ public class Player : MonoBehaviour
     void FixedUpdate(){
         all_timer += Time.fixedDeltaTime;
 
+        inputUpdate();
         updatePosHorizon();
 
         // 着地
@@ -145,6 +168,7 @@ public class Player : MonoBehaviour
         if (now_track > 1)
         {
             now_track -= 1;
+            CreateNewInputImpluse(now_track);
             toMoving = true;
         }
     }
@@ -153,6 +177,7 @@ public class Player : MonoBehaviour
         if (now_track < MAX_TRACKS)
         {
             now_track += 1;
+            CreateNewInputImpluse(now_track);
             toMoving = true;
         }
     }
@@ -228,16 +253,18 @@ public class Player : MonoBehaviour
                 };
                 movementList.Add(movement);
             }
-            if (touch.phase == TouchPhase.Ended)
+            if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Ended)
             {
 
                 for(int k = 0; k < movementList.Count; k++){
                     FromTo movement = movementList[k];
                     if(movement.fingerId == touch.fingerId){
                         movement.second = touch.position;
-                        CalcAndResponse(movement);
-                        movementList.RemoveAt(k);
-                        k--;
+                        if(Vector2.Distance(movement.first,movement.second) > 25 || touch.phase == TouchPhase.Ended){
+                            CalcAndResponse(movement);
+                            movementList.RemoveAt(k);
+                            k--;
+                        }
                     }
                 }
             }
@@ -269,6 +296,7 @@ public class Player : MonoBehaviour
 
     void moveToIndex(int index){
         now_track = index;
+        CreateNewInputImpluse(now_track);
         toMoving = true;
     }
 

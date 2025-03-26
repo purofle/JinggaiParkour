@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -37,11 +38,15 @@ public class BeatmapManager : MonoBehaviour
     public AudioSource MusicPlayer;
     public RawImage BackForVideo;
     public RawImage BackForImage;
+    public RawImage BackForVideo2;
+    public RawImage BackForImage2;
     public VideoPlayer videoPlayer;
     public GameObject ComboDisplay;
     public GameObject ResultCanvas;
     public GameObject AutoPlayImage;
     public GameObject RelaxModImage;
+    public Animator ShowFrontVideo;
+    public Animator MapInfo;
 
     // 谱面信息展示
     public RawImage DisplayInfoImage;
@@ -53,8 +58,10 @@ public class BeatmapManager : MonoBehaviour
     float last_change_time;
     float should_change_time;
     bool ready_to_change_bpm = false;
+    bool ready_to_change_hidden = false;
     float should_change_bpm = 0;
     float should_change_bpm_time = 0;
+    float should_change_hidden_time = 0;
     float autoShift = 0.0f;
 
     string dataFolder;
@@ -64,14 +71,16 @@ public class BeatmapManager : MonoBehaviour
         BEST_BEAT_TYPE,
         GAINT_BEAT_TYPE,
         BPM_TYPE,
+        HIDE_FRONT_TYPE,
         FINISH,
     }
     struct SingleBeat {
         public int type;
         public float beat_time;
-        public int track;
+        public float track;
         public int stack;
         public int rem_stack;
+        public float size;
         public float BPM;
     }
 
@@ -100,7 +109,9 @@ public class BeatmapManager : MonoBehaviour
             Texture2D texture = new Texture2D(2, 2);
             texture.LoadImage(fileData); // 自动调整纹理大小
             BackForImage.texture = texture;
+            BackForImage2.texture = texture;
             BackForImage.GetComponent<AspectRatioFitter>().aspectRatio = (float)texture.width / texture.height;
+            BackForImage2.GetComponent<AspectRatioFitter>().aspectRatio = (float)texture.width / texture.height;
             DisplayInfoImage.texture = texture;
             DisplayInfoImage.GetComponent<AspectRatioFitter>().aspectRatio = (float)texture.width / texture.height;
         }
@@ -145,16 +156,21 @@ public class BeatmapManager : MonoBehaviour
                 float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
                 int stack_count = int.Parse(data[5]);
                 int rem_stack = 0;
+                float size = 1;
                 if(data.Count() >= 7){
                     rem_stack = int.Parse(data[6]);
+                }
+                if(data.Count() >= 8){
+                    size = float.Parse(data[7]);
                 }
                 remain_beats.Add(
                     new SingleBeat(){
                         type = (int)B_TYPE.BEAT_TYPE,
                         beat_time = beat_time,
-                        track = int.Parse(data[4]),
+                        track = float.Parse(data[4]),
                         stack = stack_count,
-                        rem_stack = rem_stack
+                        rem_stack = rem_stack,
+                        size = size
                     }
                 );
                 MaxPoint += stack_count - rem_stack;
@@ -166,16 +182,21 @@ public class BeatmapManager : MonoBehaviour
                 float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
                 int stack_count = int.Parse(data[5]);
                 int rem_stack = 0;
+                float size = 1;
                 if(data.Count() >= 7){
                     rem_stack = int.Parse(data[6]);
+                }
+                if(data.Count() >= 8){
+                    size = float.Parse(data[7]);
                 }
                 remain_beats.Add(
                     new SingleBeat(){
                         type = (int)B_TYPE.BEST_BEAT_TYPE,
                         beat_time = beat_time,
-                        track = int.Parse(data[4]),
+                        track = float.Parse(data[4]),
                         stack = stack_count,
-                        rem_stack = rem_stack
+                        rem_stack = rem_stack,
+                        size = size
                     }
                 );
                 MaxPoint += stack_count - rem_stack;
@@ -193,6 +214,17 @@ public class BeatmapManager : MonoBehaviour
                         type = (int)B_TYPE.BPM_TYPE,
                         beat_time = beat_time,
                         BPM = float.Parse(data[4])
+                    }
+                );
+                continue;
+            }
+            if(data[0] == "H"){
+                float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
+                float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
+                remain_beats.Add(
+                    new SingleBeat(){
+                        type = (int)B_TYPE.HIDE_FRONT_TYPE,
+                        beat_time = beat_time,
                     }
                 );
                 continue;
@@ -264,6 +296,23 @@ public class BeatmapManager : MonoBehaviour
         (int)B_TYPE.BEST_BEAT_TYPE
     };
 
+
+    bool Intersects(float a1, float b1, float a2, float b2)
+    {
+        return (a1 < b2) && (a2 < b1);
+    }
+
+    int[] toTouchTracks(float track, float size = 1){
+        List<int> move_tracks = new();
+        float left_track = 2 * track - size;
+        float right_track = 2 * track + size;
+        for(int k = 1;k <= 3;k ++){
+            if(Intersects(left_track, right_track, k * 2 - 1, k * 2 + 1)){
+                move_tracks.Add(k);
+            }
+        }
+        return move_tracks.ToArray();
+    }
     // Update is called once per frame
     void FixedUpdate()
     {
@@ -275,7 +324,7 @@ public class BeatmapManager : MonoBehaviour
             place_pos.z = (remain_beats[0].beat_time + iniOffset) * Player.GetComponent<Player>().GetVelocity();
             place_pos.x = (float)((remain_beats[0].track - 2) * 3);
             for(int i = remain_beats[0].rem_stack;i < remain_beats[0].stack; i++){
-                place_pos.y = i * 2;
+                place_pos.y = i * 2 * remain_beats[0].size;
                 GameObject obs;
                 switch(remain_beats[0].type){
                     case (int)B_TYPE.BEAT_TYPE: {
@@ -293,20 +342,26 @@ public class BeatmapManager : MonoBehaviour
                     }
                 };
                 obs.GetComponent<MusicObstacle>().setNote();
+                obs.GetComponent<MusicObstacle>().track = toTouchTracks(remain_beats[0].track, remain_beats[0].size);
                 obs.transform.position = place_pos;
+                obs.transform.localScale *= remain_beats[0].size;
+                if(remain_beats[0].size != 1){
+                    obs.transform.localScale *= (float)4 / 3;
+                }
                 if(remain_beats[1].type == (int)B_TYPE.FINISH){
                     obs.GetComponent<MusicObstacle>().setLastNote();
                 }
             }
             remain_beats.RemoveAt(0);
         }
-        if(remain_beats[0].type == (int)B_TYPE.BPM_TYPE){
+        if(remain_beats[0].type == (int)B_TYPE.BPM_TYPE || remain_beats[0].type == (int)B_TYPE.HIDE_FRONT_TYPE){
             remain_beats.RemoveAt(0);
         }
         if(hasVideo && !isVideoPlaying){
             if(-BeforeTime + OnPlayingTime >= videoOffset){
                 videoPlayer.Play();
                 BackForVideo.GetComponent<AspectRatioFitter>().aspectRatio = (float)videoPlayer.width / videoPlayer.height;
+                BackForVideo2.GetComponent<AspectRatioFitter>().aspectRatio = (float)videoPlayer.width / videoPlayer.height;
             }
         }
 
@@ -320,6 +375,7 @@ public class BeatmapManager : MonoBehaviour
         }
         if(isEnd && !isSaved){
             ResultCanvas.SetActive(true);
+            MapInfo.SetTrigger("ResultTrigger");
             if(!isAutoPlay && !DataStorager.settings.relaxMod){
                 SaveResult();
             }
@@ -345,10 +401,21 @@ public class BeatmapManager : MonoBehaviour
             should_change_bpm = auto_remain_beats[0].BPM;
             auto_remain_beats.RemoveAt(0);
         }
+        if(auto_remain_beats[0].type == (int)B_TYPE.HIDE_FRONT_TYPE){
+            ready_to_change_hidden = true;
+            should_change_hidden_time = auto_remain_beats[0].beat_time;
+            auto_remain_beats.RemoveAt(0);
+        }
         if(ready_to_change_bpm){
             if(OnPlayingTime - BeforeTime >= should_change_bpm_time){
                 BPM = should_change_bpm;
                 ready_to_change_bpm = false;
+            }
+        }
+        if(ready_to_change_hidden){
+            if(OnPlayingTime - BeforeTime >= should_change_hidden_time){
+                ShowFrontVideo.SetBool("ShowBool",!ShowFrontVideo.GetBool("ShowBool"));
+                ready_to_change_hidden = false;
             }
         }
         if(isAutoPlay){
@@ -358,15 +425,16 @@ public class BeatmapManager : MonoBehaviour
             }
             // 先判断是不是需要大跳
             if(auto_remain_beats[0].stack > 1 && Player.GetComponent<Player>().GetPos().y < 0.01f){
-                float jump_should_remain_time = (float)Math.Sqrt(Math.Pow(2,(int)Math.Log(auto_remain_beats[0].stack,2) + 1) * 2 / Player.GetComponent<Player>().GetGravity());
+                float jump_should_remain_time = (float)Math.Sqrt(Math.Pow(2,(int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size,2) + 1) * 2 / Player.GetComponent<Player>().GetGravity());
                 if(Player.GetComponent<Player>().GetPos().z / Player.GetComponent<Player>().GetVelocity() + jump_should_remain_time - autoShift > auto_remain_beats[0].beat_time + iniOffset){
-                    int jump_times = (int)Math.Log(auto_remain_beats[0].stack,2);
+                    int jump_times = (int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size,2);
                     for(int k = 0;k < jump_times; k++){
                         Player.GetComponent<Player>().moveUp();
                     }
                 }
             }
-            if(Player.GetComponent<Player>().GetNowTrack() != auto_remain_beats[0].track){
+            int[] should_tracks = toTouchTracks(auto_remain_beats[0].track, remain_beats[0].size);
+            if(!should_tracks.Contains(Player.GetComponent<Player>().GetNowTrack()) && (should_tracks.Count() > 0)){
                 if(!last_record){
                     last_change_time = OnPlayingTime - BeforeTime;
                     last_record = true;
@@ -377,7 +445,7 @@ public class BeatmapManager : MonoBehaviour
                     should_change_time = last_change_time + switch_time;
                 }
                 if(OnPlayingTime - BeforeTime >= should_change_time){
-                    int should_move_times = auto_remain_beats[0].track - Player.GetComponent<Player>().GetNowTrack();
+                    int should_move_times = should_tracks[0] - Player.GetComponent<Player>().GetNowTrack();
                     // 移动
                     if(should_move_times > 0){
                         for(int j = 0; j < should_move_times; j++){
@@ -397,7 +465,7 @@ public class BeatmapManager : MonoBehaviour
             }
 
             // 设置跨越速度
-            if(auto_remain_beats[1].type != (int)B_TYPE.FINISH){
+            if(detect_list.Contains(auto_remain_beats[1].type)){
                 Player.GetComponent<Player>().setCrossTime(auto_remain_beats[1].beat_time - auto_remain_beats[0].beat_time);
             }
 
