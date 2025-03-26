@@ -55,4 +55,19 @@ public class DataManager
         public bool relaxMod;
         public string skinPath;
     }
+
+    public struct KeySettings {
+        public KeyCode[] left;
+        public KeyCode[] right;
+        public KeyCode[] up;
+        public KeyCode[] down;
+        public KeyCode[] pad1;
+        public KeyCode[] pad2;
+        public KeyCode[] pad3;
+    }
+
+    public struct HistoryRecord {
+        public bool isOldPlayer;
+        public bool isHaveNewSkin;
+    }
 }

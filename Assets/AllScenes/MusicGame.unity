@@ -5050,6 +5050,7 @@ MonoBehaviour:
   track_texture: {fileID: 2800000, guid: 55c68f3fd83dcdb4b8ada1ad7ce9925b, type: 3}
   obstacle_texture: {fileID: 2800000, guid: 410d6f6f15d70db499f0969c1b71b4b0, type: 3}
   side_texture: {fileID: 2800000, guid: 8244642d818cfc74599bc1bab5c8b5ed, type: 3}
+  side_floor_texture: {fileID: 2800000, guid: e6f27ccbf2d314f4b9b6f6ee3cda79dd, type: 3}
 --- !u!4 &2046002661
 Transform:
   m_ObjectHideFlags: 0

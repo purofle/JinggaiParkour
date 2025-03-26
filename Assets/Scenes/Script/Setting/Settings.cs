@@ -111,6 +111,7 @@ public class Settings : MonoBehaviour
         DataStorager.settings.skinPath = SkinDropdown.options[SkinDropdown.value].text;
         // 保存
         DataStorager.SaveSettings();
+        DataStorager.SaveKeySettings();
         globalSettings.handleSettings();
         SceneManager.LoadScene("Initalize");
     }

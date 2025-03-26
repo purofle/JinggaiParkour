@@ -3,20 +3,17 @@ using System.IO;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DisplayPanel : MonoBehaviour
 {
-    public Sprite[] Presents;
     public TMP_Text Level;
     public TMP_Text title;
     public TMP_Text description;
     public GameObject recordItem;
     public GameObject recordItemFather;
-    // Start is called before the first frame update
-    void Start()
-    {
-        LoadPanel();
-    }
+    public Image levelImage;
+    public Sprite[] LevelPresents;
 
     public void LoadPanel(){
         string beat_path = $"{Application.persistentDataPath}/music/{BeatmapInfo.beatmap_name}/data.sdz";
@@ -38,6 +35,16 @@ public class DisplayPanel : MonoBehaviour
             }
             if(data[0].Replace(" ","") == "level"){
                 Level.text = data[1].Replace(" ","");
+                float level = float.Parse(data[1].Replace(" ",""));
+                if(level < 6){
+                    levelImage.sprite = LevelPresents[3];
+                } else if (level < 10){
+                    levelImage.sprite = LevelPresents[2];
+                } else if (level < 13){
+                    levelImage.sprite = LevelPresents[1];
+                } else {
+                    levelImage.sprite = LevelPresents[0];
+                }
                 continue;
             }
         }
@@ -55,11 +62,5 @@ public class DisplayPanel : MonoBehaviour
                 newItem.GetComponent<RecordItem>().beatmapResult = result;
             }
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

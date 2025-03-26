@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class LoadMaplist : MonoBehaviour
@@ -21,11 +22,14 @@ public class LoadMaplist : MonoBehaviour
 
     public GameObject SingleItem;
     public GameObject MapList;
+    public GameObject t_DisplayPanel;
+    public static GameObject DisplayPanel;
 
     static bool isDeleteState = false;
     public Text deleteStateButtonText;
 
     private void Awake() {
+        DisplayPanel = t_DisplayPanel;
         dataFolder = $"{Application.persistentDataPath}/music";
         if(!Directory.Exists(dataFolder)){
             Directory.CreateDirectory(dataFolder);
@@ -113,6 +117,19 @@ public class LoadMaplist : MonoBehaviour
         } else {
             deleteStateButtonText.text = "取消删除";
         }
+    }
+
+    public static void OpenDisplayPanel(){
+        DisplayPanel.SetActive(true);
+        DisplayPanel.GetComponent<DisplayPanel>().LoadPanel();
+    }
+
+    public static void TurnOffDisplayPanel(){
+        DisplayPanel.SetActive(false);
+    }
+
+    public static void GameStart(){
+        SceneManager.LoadScene("MusicGame");
     }
 
     public static bool IsDeleting(){

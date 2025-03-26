@@ -1,5 +1,9 @@
+using System.IO;
+using System.IO.Compression;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using static DataManager;
+
 public class DataStorager : MonoBehaviour
 {
   // public GameObject dunzi;
@@ -9,11 +13,14 @@ public class DataStorager : MonoBehaviour
   public static Item maxLife;
 
   public static DunziSettings settings;
+  public static KeySettings keysettings;
+  public static HistoryRecord historyRecord;
+
   private void Awake() {
     DontDestroyOnLoad(gameObject);
-  }
-  private void Start(){
+    historyRecord = InitHistory();
     settings = InitSettings();
+    keysettings = InitKeySettings();
     coin = InitItem("coin",0);
     maxLife = InitItem("life",1);
     if(IsDataed("lastcon")){
@@ -24,6 +31,33 @@ public class DataStorager : MonoBehaviour
         port = 7892,
         playerID = ""
       };
+    }
+
+    // 新手大礼包
+    if(!historyRecord.isOldPlayer){
+      // TODO
+    }
+    if(!historyRecord.isHaveNewSkin){
+      GiveNewSkin();
+      historyRecord.isHaveNewSkin = true;
+    }
+  }
+
+  private void GiveNewSkin(){
+    if(!Directory.Exists($"{Application.persistentDataPath}/skin")){
+      Directory.CreateDirectory($"{Application.persistentDataPath}/skin");
+    }
+    if(Directory.Exists($"{Application.persistentDataPath}/skin/Black and White")){
+      return;
+    }
+    TextAsset skinObject = Resources.Load<TextAsset>("Skin/baw");
+    byte[] skinData = skinObject.bytes;
+    string tempZipPath = Path.Combine(Application.temporaryCachePath, "temp.zip");
+    File.WriteAllBytes(tempZipPath, skinData);
+    string outputPath = $"{Application.persistentDataPath}/skin/Black and White";
+    ZipFile.ExtractToDirectory(tempZipPath, outputPath);
+    if(File.Exists(tempZipPath)) {
+      File.Delete(tempZipPath);
     }
   }
 
@@ -50,6 +84,34 @@ public class DataStorager : MonoBehaviour
       };
     }
   }
+
+  private KeySettings InitKeySettings(){
+    if(IsDataed("keysettings")){
+      return Load<KeySettings>("keysettings");
+    } else {
+      return GetDefaultKeySettings();
+    }
+  }
+
+  private HistoryRecord InitHistory(){
+    if(IsDataed("historyrecord")){
+      return Load<HistoryRecord>("historyrecord");
+    } else {
+      return new();
+    }
+  }
+
+  public static KeySettings GetDefaultKeySettings(){
+    return new (){
+        left = new KeyCode[]{ KeyCode.A, KeyCode.LeftArrow },
+        right = new KeyCode[]{ KeyCode.D, KeyCode.RightArrow },
+        up = new KeyCode[]{ KeyCode.Space, KeyCode.W, KeyCode.UpArrow},
+        down = new KeyCode[]{ KeyCode.DownArrow, KeyCode.S },
+        pad1 = new KeyCode[]{KeyCode.Z,KeyCode.Keypad1,KeyCode.Alpha1},
+        pad2 = new KeyCode[]{KeyCode.X,KeyCode.Keypad2,KeyCode.Alpha2},
+        pad3 = new KeyCode[]{KeyCode.C,KeyCode.Keypad3,KeyCode.Alpha3}
+    };
+  }
   // private void Update(){
   //   if(!dunzi.GetComponent<Move>().isAlive()){
 
@@ -70,5 +132,13 @@ public class DataStorager : MonoBehaviour
 
   public static void SaveSettings(){
     Save("settings", settings);
+  }
+
+  public static void SaveKeySettings(){
+    Save("keysettings", keysettings);
+  }
+
+  public static void SaveHisroty(){
+    Save("historyrecord", historyRecord);
   }
 }

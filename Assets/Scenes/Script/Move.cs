@@ -235,28 +235,28 @@ public class Move : MonoBehaviour
         //         moveUp();
         //     }
         // }
-        KeyCode[] leftKeys = {KeyCode.A,KeyCode.LeftArrow};
+        KeyCode[] leftKeys = DataStorager.keysettings.left;
         foreach( KeyCode key in leftKeys ){
             if(Input.GetKeyDown(key)){
                  moveLeft();
             }
         }
 
-        KeyCode[] rightKeys = {KeyCode.D,KeyCode.RightArrow};
+        KeyCode[] rightKeys = DataStorager.keysettings.right;
         foreach( KeyCode key in rightKeys ){
             if(Input.GetKeyDown(key)){
                  moveRight();
             }
         }
 
-        KeyCode[] upKeys = {KeyCode.Space,KeyCode.W,KeyCode.UpArrow};
+        KeyCode[] upKeys = DataStorager.keysettings.up;
         foreach( KeyCode key in upKeys ){
             if(Input.GetKeyDown(key)){
                  moveUp();
             }
         }
 
-        KeyCode[] downKeys = {KeyCode.DownArrow,KeyCode.S};
+        KeyCode[] downKeys = DataStorager.keysettings.down;
         foreach( KeyCode key in downKeys ){
             if(Input.GetKeyDown(key)){
                  moveDown();

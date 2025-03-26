@@ -59,9 +59,9 @@ public class BeatmapManager : MonoBehaviour
     float should_change_time;
     bool ready_to_change_bpm = false;
     bool ready_to_change_hidden = false;
-    float should_change_bpm = 0;
-    float should_change_bpm_time = 0;
-    float should_change_hidden_time = 0;
+    List<float> should_change_bpm = new();
+    List<float> should_change_bpm_time = new();
+    List<float> should_change_hidden_time = new();
     float autoShift = 0.0f;
 
     string dataFolder;
@@ -103,6 +103,8 @@ public class BeatmapManager : MonoBehaviour
             videoPlayer.playOnAwake = false;
             videoPlayer.url = $"file://{dataFolder}/{beatmap_name}/bg.mp4";
             hasVideo = true;
+        } else {
+            BackForVideo.GameObject().SetActive(false);
         }
         if(File.Exists($"{dataFolder}/{beatmap_name}/bg.png")){
             byte[] fileData = File.ReadAllBytes($"{dataFolder}/{beatmap_name}/bg.png");
@@ -366,7 +368,7 @@ public class BeatmapManager : MonoBehaviour
         }
 
         if(BeforeTime > 0){
-            BeforeTime -= Time.deltaTime;
+            BeforeTime -= Time.fixedDeltaTime;
             return;
         }
         if(!isPlaying){
@@ -397,25 +399,32 @@ public class BeatmapManager : MonoBehaviour
     void autoplay() {
         if(auto_remain_beats[0].type == (int)B_TYPE.BPM_TYPE){
             ready_to_change_bpm = true;
-            should_change_bpm_time = auto_remain_beats[0].beat_time;
-            should_change_bpm = auto_remain_beats[0].BPM;
+            should_change_bpm_time.Add(auto_remain_beats[0].beat_time);
+            should_change_bpm.Add(auto_remain_beats[0].BPM);
             auto_remain_beats.RemoveAt(0);
         }
         if(auto_remain_beats[0].type == (int)B_TYPE.HIDE_FRONT_TYPE){
             ready_to_change_hidden = true;
-            should_change_hidden_time = auto_remain_beats[0].beat_time;
+            should_change_hidden_time.Add(auto_remain_beats[0].beat_time);
             auto_remain_beats.RemoveAt(0);
         }
         if(ready_to_change_bpm){
-            if(OnPlayingTime - BeforeTime >= should_change_bpm_time){
-                BPM = should_change_bpm;
-                ready_to_change_bpm = false;
+            if(OnPlayingTime - BeforeTime >= should_change_bpm_time[0]){
+                BPM = should_change_bpm[0];
+                should_change_bpm_time.RemoveAt(0);
+                should_change_bpm.RemoveAt(0);
+                if(should_change_bpm_time.Count <= 0){
+                    ready_to_change_bpm = false;
+                }
             }
         }
         if(ready_to_change_hidden){
-            if(OnPlayingTime - BeforeTime >= should_change_hidden_time){
+            if(OnPlayingTime - BeforeTime >= should_change_hidden_time[0]){
                 ShowFrontVideo.SetBool("ShowBool",!ShowFrontVideo.GetBool("ShowBool"));
-                ready_to_change_hidden = false;
+                should_change_hidden_time.RemoveAt(0);
+                if(should_change_hidden_time.Count <= 0){
+                    ready_to_change_hidden = false;
+                }
             }
         }
         if(isAutoPlay){
@@ -459,7 +468,24 @@ public class BeatmapManager : MonoBehaviour
                 }
             }
         }
-        if(Player.GetComponent<Player>().GetPos().z >= (auto_remain_beats[0].beat_time + iniOffset - autoShift) * Player.GetComponent<Player>().GetVelocity() && auto_remain_beats[0].type != (int)B_TYPE.FINISH){
+        while(Player.GetComponent<Player>().GetPos().z >= (auto_remain_beats[0].beat_time + iniOffset - autoShift) * Player.GetComponent<Player>().GetVelocity() && auto_remain_beats[0].type != (int)B_TYPE.FINISH){
+            int[] should_tracks = toTouchTracks(auto_remain_beats[0].track, remain_beats[0].size);
+
+            // 补足 Auto 的痛（
+            if(!should_tracks.Contains(Player.GetComponent<Player>().GetNowTrack()) && (should_tracks.Count() > 0) && isAutoPlay){
+                int should_move_times = should_tracks[0] - Player.GetComponent<Player>().GetNowTrack();
+                // 移动
+                if(should_move_times > 0){
+                    for(int j = 0; j < should_move_times; j++){
+                        Player.GetComponent<Player>().moveRight();
+                    }
+                } else {
+                    for(int j = 0; j < -should_move_times; j++){
+                        Player.GetComponent<Player>().moveLeft();
+                    }
+                }
+            }
+
             if(Player.GetComponent<Player>().GetPos().y > 0.1f && isAutoPlay){
                 Player.GetComponent<Player>().moveDown();
             }

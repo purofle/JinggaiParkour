@@ -34,9 +34,9 @@ public class SingleBeatmapInfo : MonoBehaviour
         );
         backImage.GetComponent<AspectRatioFitter>().aspectRatio = (float)texture.width / texture.height;
     }
-    void StartGame(string path){
+    void GetReady(string path){
         BeatmapInfo.beatmap_name = path;
-        SceneManager.LoadScene("MusicGame");
+        LoadMaplist.OpenDisplayPanel();
     }
 
     void DeleteMap(string path){
@@ -46,7 +46,7 @@ public class SingleBeatmapInfo : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        gameObject.GetComponent<Button>().onClick.AddListener(() => StartGame(path));
+        gameObject.GetComponent<Button>().onClick.AddListener(() => GetReady(path));
         deleteButton.GetComponent<Button>().onClick.AddListener(() => DeleteMap(path));
         title_object.text = title;
         descrip_object.text = description;
