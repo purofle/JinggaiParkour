@@ -60,11 +60,11 @@ public class FileBrowserSet : MonoBehaviour
 			float level = 0;
 			foreach( string line in File.ReadAllText(path).Split("\n")){
 				string[] data = line.Split("=");
-            	if(data[0].Replace(" ","") == "title"){
-					title = data[1].Replace(" ","");
+            	if(data[0].Trim() == "title"){
+					title = data[1].Trim();
 				}
-				if(data[0].Replace(" ","") == "level"){
-					level = float.Parse(data[1].Replace(" ",""));
+				if(data[0].Trim() == "level"){
+					level = float.Parse(data[1].Trim());
 				}
 			}
 			title += "_" + level.ToString();

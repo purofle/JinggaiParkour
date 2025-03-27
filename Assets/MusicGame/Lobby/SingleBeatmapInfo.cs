@@ -1,18 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Newtonsoft.Json;
 using SimpleFileBrowser;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using static LoadMaplist;
 
 public class SingleBeatmapInfo : MonoBehaviour
 {
-    public string path = "";
-    public string title = "";
-    public string description = "";
+    public AnBeatmapInfo beatmapInfo;
+    public List<AnBeatmapInfo> beatmapInfos;
     public Sprite[] Presents;
     public Sprite[] LevelPresents;
-    public int max_rating;
-    public float level;
     public TMP_Text title_object;
     public TMP_Text descrip_object;
     public TMP_Text level_object;
@@ -21,13 +23,18 @@ public class SingleBeatmapInfo : MonoBehaviour
     public Image levelImage;
     public GameObject deleteButton;
 
+    public GameObject diffUpButton;
+    public GameObject diffDownButton;
+
+    public int diff_index = 0;
+
     string dataFolder;
 
     private void Awake() {
         dataFolder = $"{Application.persistentDataPath}/music";
     }
 
-    public void setBackground(Texture2D texture) {
+    public void SetBackground(Texture2D texture) {
         backImage.sprite = Sprite.Create(texture,
             new Rect(0, 0, texture.width, texture.height),
             new Vector2(0.5f, 0.5f)
@@ -43,35 +50,59 @@ public class SingleBeatmapInfo : MonoBehaviour
         FileBrowserHelpers.DeleteDirectory($"{dataFolder}/{path}");
         SceneManager.LoadScene("MusicLobby");
     }
-    // Start is called before the first frame update
-    void Start()
+    public void LoadBeatmapInfo()
     {
-        gameObject.GetComponent<Button>().onClick.AddListener(() => GetReady(path));
-        deleteButton.GetComponent<Button>().onClick.AddListener(() => DeleteMap(path));
-        title_object.text = title;
-        descrip_object.text = description;
+        beatmapInfo = beatmapInfos[diff_index];
+
+        gameObject.GetComponent<Button>().onClick.AddListener(() => GetReady(beatmapInfo.path));
+        deleteButton.GetComponent<Button>().onClick.AddListener(() => DeleteMap(beatmapInfo.path));
+        title_object.text = beatmapInfo.title;
+        descrip_object.text = $"曲师：{beatmapInfo.author}\n谱师：{beatmapInfo.mapper}";
+
+        int max_rating = 100;
+        if(File.Exists($"{Application.persistentDataPath}/record/{beatmapInfo.path}.dat")){
+            var data_list = JsonConvert.DeserializeObject<List<BeatmapManager.BeatmapResult>>(File.ReadAllText($"{Application.persistentDataPath}/record/{beatmapInfo.path}.dat"));
+            foreach(BeatmapManager.BeatmapResult result in data_list){
+                max_rating = Math.Min(max_rating,result.rating);
+            }
+        }
         if(max_rating < 15){
             Rating.sprite = Presents[max_rating];
         } else {
             Rating.sprite = null;
             Rating.color = new Color(0,0,0,0);
         }
-        level_object.text = level.ToString();
+        level_object.text = beatmapInfo.level.ToString();
         // 评级
-        if(level < 6){
+        if(beatmapInfo.level < 6){
             levelImage.sprite = LevelPresents[3];
-        } else if (level < 10){
+        } else if (beatmapInfo.level < 10){
             levelImage.sprite = LevelPresents[2];
-        } else if (level < 13){
+        } else if (beatmapInfo.level < 13){
             levelImage.sprite = LevelPresents[1];
         } else {
             levelImage.sprite = LevelPresents[0];
         }
     }
 
+    public void SwitchDiff(int delta){
+        diff_index += delta;
+        LoadBeatmapInfo();
+    }
+
     // Update is called once per frame
     void Update()
     {
+        if(diff_index <= 0){
+            diffDownButton.SetActive(false);
+        } else {
+            diffDownButton.SetActive(true);
+        }
+        if(diff_index >= beatmapInfos.Count - 1){
+            diffUpButton.SetActive(false);
+        } else {
+            diffUpButton.SetActive(true);
+        }
         deleteButton.SetActive(LoadMaplist.IsDeleting());
     }
 }

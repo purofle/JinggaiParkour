@@ -21,21 +21,21 @@ public class DisplayPanel : MonoBehaviour
         string mapper = "";
         foreach ( string line in File.ReadAllText(beat_path).Split("\n")){
             string[] data = line.Split("=");
-            if(data[0].Replace(" ","") == "title"){
-                title.text = data[1].Replace(" ","");
+            if(data[0].Trim() == "title"){
+                title.text = data[1].Trim();
                 continue;
             }
-            if(data[0].Replace(" ","") == "author"){
-                author = data[1].Replace(" ","");
+            if(data[0].Trim() == "author"){
+                author = data[1].Trim();
                 continue;
             }
-            if(data[0].Replace(" ","") == "mapper"){
-                mapper = data[1].Replace(" ","");
+            if(data[0].Trim() == "mapper"){
+                mapper = data[1].Trim();
                 continue;
             }
-            if(data[0].Replace(" ","") == "level"){
-                Level.text = data[1].Replace(" ","");
-                float level = float.Parse(data[1].Replace(" ",""));
+            if(data[0].Trim() == "level"){
+                Level.text = data[1].Trim();
+                float level = float.Parse(data[1].Trim());
                 if(level < 6){
                     levelImage.sprite = LevelPresents[3];
                 } else if (level < 10){

@@ -81,6 +81,7 @@ public class BeatmapManager : MonoBehaviour
         public int stack;
         public int rem_stack;
         public float size;
+        public float y_offset;
         public float BPM;
     }
 
@@ -125,31 +126,31 @@ public class BeatmapManager : MonoBehaviour
         float last_time = 0;
         foreach( string line in File.ReadAllText(path).Split("\n")){
             string[] data = line.Split("=");
-            if(data[0].Replace(" ","") == "bpm"){
-                BPM = float.Parse(data[1].Replace(" ",""));
+            if(data[0].Trim() == "bpm"){
+                BPM = float.Parse(data[1].Trim());
                 remain_beats.Add(
                     new SingleBeat(){
                         type = (int)B_TYPE.BPM_TYPE,
                         beat_time = 0,
-                        BPM = float.Parse(data[1].Replace(" ",""))
+                        BPM = float.Parse(data[1].Trim())
                     }
                 );
                 continue;
             }
-            if(data[0].Replace(" ","") == "offset"){
-                offset += float.Parse(data[1].Replace(" ",""));
+            if(data[0].Trim() == "offset"){
+                offset += float.Parse(data[1].Trim());
                 continue;
             }
-            if(data[0].Replace(" ","") == "bg_offset"){
-                videoOffset = float.Parse(data[1].Replace(" ",""));
+            if(data[0].Trim() == "bg_offset"){
+                videoOffset = float.Parse(data[1].Trim());
                 continue;
             }
-            if(data[0].Replace(" ","") == "title"){
-                DisplayInfoText.text = data[1].Replace(" ","");
+            if(data[0].Trim() == "title"){
+                DisplayInfoText.text = data[1].Trim();
                 continue;
             }
-            if(data[0].Replace(" ","") == "level"){
-                levelDisplayer.level = float.Parse(data[1].Replace(" ",""));
+            if(data[0].Trim() == "level"){
+                levelDisplayer.level = float.Parse(data[1].Trim());
                 continue;
             }
             data = line.Split(",");
@@ -158,12 +159,16 @@ public class BeatmapManager : MonoBehaviour
                 float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
                 int stack_count = int.Parse(data[5]);
                 int rem_stack = 0;
-                float size = 1;
                 if(data.Count() >= 7){
                     rem_stack = int.Parse(data[6]);
                 }
+                float size = 1;
                 if(data.Count() >= 8){
                     size = float.Parse(data[7]);
+                }
+                float y_offset = 0;
+                if(data.Count() >= 9){
+                    y_offset = float.Parse(data[8]);
                 }
                 remain_beats.Add(
                     new SingleBeat(){
@@ -172,7 +177,8 @@ public class BeatmapManager : MonoBehaviour
                         track = float.Parse(data[4]),
                         stack = stack_count,
                         rem_stack = rem_stack,
-                        size = size
+                        size = size,
+                        y_offset = y_offset
                     }
                 );
                 MaxPoint += stack_count - rem_stack;
@@ -184,12 +190,16 @@ public class BeatmapManager : MonoBehaviour
                 float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
                 int stack_count = int.Parse(data[5]);
                 int rem_stack = 0;
-                float size = 1;
                 if(data.Count() >= 7){
                     rem_stack = int.Parse(data[6]);
                 }
+                float size = 1;
                 if(data.Count() >= 8){
                     size = float.Parse(data[7]);
+                }
+                float y_offset = 0;
+                if(data.Count() >= 9){
+                    y_offset = float.Parse(data[8]);
                 }
                 remain_beats.Add(
                     new SingleBeat(){
@@ -198,7 +208,8 @@ public class BeatmapManager : MonoBehaviour
                         track = float.Parse(data[4]),
                         stack = stack_count,
                         rem_stack = rem_stack,
-                        size = size
+                        size = size,
+                        y_offset = y_offset
                     }
                 );
                 MaxPoint += stack_count - rem_stack;
@@ -326,7 +337,7 @@ public class BeatmapManager : MonoBehaviour
             place_pos.z = (remain_beats[0].beat_time + iniOffset) * Player.GetComponent<Player>().GetVelocity();
             place_pos.x = (float)((remain_beats[0].track - 2) * 3);
             for(int i = remain_beats[0].rem_stack;i < remain_beats[0].stack; i++){
-                place_pos.y = i * 2 * remain_beats[0].size;
+                place_pos.y = remain_beats[0].y_offset + i * 2 * remain_beats[0].size;
                 GameObject obs;
                 switch(remain_beats[0].type){
                     case (int)B_TYPE.BEAT_TYPE: {
@@ -433,10 +444,10 @@ public class BeatmapManager : MonoBehaviour
                 return;
             }
             // 先判断是不是需要大跳
-            if(auto_remain_beats[0].stack > 1 && Player.GetComponent<Player>().GetPos().y < 0.01f){
-                float jump_should_remain_time = (float)Math.Sqrt(Math.Pow(2,(int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size,2) + 1) * 2 / Player.GetComponent<Player>().GetGravity());
+            if((auto_remain_beats[0].stack > 1 || auto_remain_beats[0].y_offset > 1) && Player.GetComponent<Player>().GetPos().y < 0.01f){
+                float jump_should_remain_time = (float)Math.Sqrt(Math.Pow(2,(int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size + auto_remain_beats[0].y_offset,2) + 1) * 2 / Player.GetComponent<Player>().GetGravity());
                 if(Player.GetComponent<Player>().GetPos().z / Player.GetComponent<Player>().GetVelocity() + jump_should_remain_time - autoShift > auto_remain_beats[0].beat_time + iniOffset){
-                    int jump_times = (int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size,2);
+                    int jump_times = (int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size + auto_remain_beats[0].y_offset,2);
                     for(int k = 0;k < jump_times; k++){
                         Player.GetComponent<Player>().moveUp();
                     }

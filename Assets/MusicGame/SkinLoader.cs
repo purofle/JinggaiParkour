@@ -1,5 +1,7 @@
+using System.Collections;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class SkinLoader : MonoBehaviour
 {
@@ -42,6 +44,46 @@ public class SkinLoader : MonoBehaviour
         if(File.Exists($"{skin_path}/side_floor.png")){
             byte[] fileData = File.ReadAllBytes($"{skin_path}/side_floor.png");
             side_floor_texture.LoadImage(fileData);
+        }
+
+        if(File.Exists($"{skin_path}/crash.wav")){
+            StartCoroutine(LoadBoomSound($"file://{skin_path}/crash.wav",AudioType.WAV));
+        }
+
+        if(File.Exists($"{skin_path}/golden.wav")){
+            StartCoroutine(LoadBestSound($"file://{skin_path}/golden.wav",AudioType.WAV));
+        }
+    }
+
+    IEnumerator LoadBoomSound(string path, AudioType audioType)
+    {
+        using UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(path, audioType);
+        yield return www.SendWebRequest();
+
+        if (www.result == UnityWebRequest.Result.ConnectionError)
+        {
+            Debug.Log(www.error);
+        }
+        else
+        {
+            AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
+            SoundManager.boom_sound = clip;
+        }
+    }
+
+    IEnumerator LoadBestSound(string path, AudioType audioType)
+    {
+        using UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(path, audioType);
+        yield return www.SendWebRequest();
+
+        if (www.result == UnityWebRequest.Result.ConnectionError)
+        {
+            Debug.Log(www.error);
+        }
+        else
+        {
+            AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
+            SoundManager.best_sound = clip;
         }
     }
 
