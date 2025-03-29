@@ -20,6 +20,7 @@ public class Settings : MonoBehaviour
     public Toggle notVibrate;
     public Toggle notBoomFX;
     public Toggle RelaxMod;
+    public Toggle CinemaMod;
     public InputField MusicGameOffsetMs;
     public TMP_Dropdown SkinDropdown;
     List<string> subfolders;
@@ -32,6 +33,7 @@ public class Settings : MonoBehaviour
         notVibrate.isOn = DataStorager.settings.notVibrate;
         notBoomFX.isOn = DataStorager.settings.notBoomFX;
         RelaxMod.isOn = DataStorager.settings.relaxMod;
+        CinemaMod.isOn = DataStorager.settings.cinemaMod;
         MaxLife.text = DataStorager.maxLife.count.ToString();
         MusicGameOffsetMs.text = DataStorager.settings.offsetMs.ToString();
         if(DataStorager.settings.CustomMaxLife > 0){
@@ -69,6 +71,7 @@ public class Settings : MonoBehaviour
         DataStorager.settings.isAutoPlay = isAutoPlay.isOn;
         DataStorager.settings.notBoomFX = notBoomFX.isOn;
         DataStorager.settings.relaxMod = RelaxMod.isOn;
+        DataStorager.settings.cinemaMod = CinemaMod.isOn;
         if (!int.TryParse(CustomMaxLife.text, out int clife))
         {
             DataStorager.settings.CustomMaxLife = DataStorager.maxLife.count;

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Lofelt.NiceVibrations;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MusicObstacle : MonoBehaviour
@@ -11,6 +12,7 @@ public class MusicObstacle : MonoBehaviour
     private bool isInit = true;
     private bool isLast = false;
     public bool isBest = false;
+    bool forcePerfect = false;
     public int[] track;
     public GameObject player;
     public GameObject camera;
@@ -71,6 +73,10 @@ public class MusicObstacle : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
+        if(DataStorager.settings.cinemaMod){
+            isTouched = true;
+            forcePerfect = true;
+        }
         if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 2 * (player.GetComponent<Player>().GetVelocity() / 50)
           && isOnTrack()
           && Math.Abs(player.transform.position.y - gameObject.transform.position.y) < 2
@@ -88,7 +94,7 @@ public class MusicObstacle : MonoBehaviour
 
         if(player.transform.position.z >= gameObject.transform.position.z && isTouched && !isInit)
         {
-            if(player.transform.position.z - gameObject.transform.position.z <= 1.25 * (player.GetComponent<Player>().GetVelocity() / 50)){
+            if(player.transform.position.z - gameObject.transform.position.z <= 1.25 * (player.GetComponent<Player>().GetVelocity() / 50) || forcePerfect){
                 // Perfect
                 GenerateBoom(perfectboom);
                 beatmapManager.AddNowPoint(1);

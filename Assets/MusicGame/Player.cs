@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static InputStruct;
@@ -51,9 +52,19 @@ public class Player : MonoBehaviour
         velocity.z = 50 * speed;
     }
 
+    IEnumerator FixPos(){
+        while(true){
+            Vector3 pos = transform.position;
+            pos.z = beatmapManager.GetPlayingTime() * velocity.z;
+            transform.position = pos;
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        StartCoroutine(FixPos());
         updateGravity();
     }
 

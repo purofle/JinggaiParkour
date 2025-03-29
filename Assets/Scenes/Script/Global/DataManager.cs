@@ -53,6 +53,7 @@ public class DataManager
         public int offsetMs;
         public bool notBoomFX;
         public bool relaxMod;
+        public bool cinemaMod;
         public string skinPath;
     }
 

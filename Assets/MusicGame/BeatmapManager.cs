@@ -44,6 +44,7 @@ public class BeatmapManager : MonoBehaviour
     public GameObject ComboDisplay;
     public GameObject ResultCanvas;
     public GameObject AutoPlayImage;
+    public GameObject CinemaImage;
     public GameObject RelaxModImage;
     public Animator ShowFrontVideo;
     public Animator MapInfo;
@@ -296,6 +297,9 @@ public class BeatmapManager : MonoBehaviour
         if(!DataStorager.settings.relaxMod){
             RelaxModImage.SetActive(false);
         }
+        if(!DataStorager.settings.cinemaMod){
+            CinemaImage.SetActive(false);
+        }
     }
 
     // Start is called before the first frame update
@@ -326,6 +330,11 @@ public class BeatmapManager : MonoBehaviour
         }
         return move_tracks.ToArray();
     }
+
+    public float GetPlayingTime(){
+        return -BeforeTime + OnPlayingTime + iniOffset;
+    }
+
     // Update is called once per frame
     void FixedUpdate()
     {
@@ -389,7 +398,7 @@ public class BeatmapManager : MonoBehaviour
         if(isEnd && !isSaved){
             ResultCanvas.SetActive(true);
             MapInfo.SetTrigger("ResultTrigger");
-            if(!isAutoPlay && !DataStorager.settings.relaxMod){
+            if(!isAutoPlay && !DataStorager.settings.relaxMod && !DataStorager.settings.cinemaMod){
                 SaveResult();
             }
             isSaved = true;
