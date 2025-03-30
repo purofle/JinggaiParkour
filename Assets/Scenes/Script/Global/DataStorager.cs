@@ -50,11 +50,11 @@ public class DataStorager : MonoBehaviour
     if(Directory.Exists($"{Application.persistentDataPath}/skin/Black and White")){
       return;
     }
-    TextAsset skinObject = Resources.Load<TextAsset>("Skin/baw");
+    TextAsset skinObject = Resources.Load<TextAsset>("Skin/default");
     byte[] skinData = skinObject.bytes;
     string tempZipPath = Path.Combine(Application.temporaryCachePath, "temp.zip");
     File.WriteAllBytes(tempZipPath, skinData);
-    string outputPath = $"{Application.persistentDataPath}/skin/Black and White";
+    string outputPath = $"{Application.persistentDataPath}/skin/";
     ZipFile.ExtractToDirectory(tempZipPath, outputPath);
     if(File.Exists(tempZipPath)) {
       File.Delete(tempZipPath);

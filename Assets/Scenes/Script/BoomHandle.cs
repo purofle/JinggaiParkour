@@ -14,7 +14,6 @@ public class BoomHandle : MonoBehaviour
     }
     void Start()
     {
-        
     }
 
     IEnumerator DestroyAfterDelay()

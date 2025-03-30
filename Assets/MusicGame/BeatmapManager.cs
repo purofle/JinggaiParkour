@@ -398,7 +398,8 @@ public class BeatmapManager : MonoBehaviour
         if(isEnd && !isSaved){
             ResultCanvas.SetActive(true);
             MapInfo.SetTrigger("ResultTrigger");
-            if(!isAutoPlay && !DataStorager.settings.relaxMod && !DataStorager.settings.cinemaMod){
+            if(!isAutoPlay && !DataStorager.settings.relaxMod && !DataStorager.settings.cinemaMod
+                && !(DateTime.Now.Day == 1 && DateTime.Now.Month == 4) ){
                 SaveResult();
             }
             isSaved = true;

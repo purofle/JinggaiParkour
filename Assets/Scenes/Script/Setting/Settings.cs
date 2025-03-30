@@ -19,6 +19,7 @@ public class Settings : MonoBehaviour
     public Toggle isAutoPlay;
     public Toggle notVibrate;
     public Toggle notBoomFX;
+    public Toggle notBeatmapSkin;
     public Toggle RelaxMod;
     public Toggle CinemaMod;
     public InputField MusicGameOffsetMs;
@@ -32,6 +33,7 @@ public class Settings : MonoBehaviour
         isAutoPlay.isOn = DataStorager.settings.isAutoPlay;
         notVibrate.isOn = DataStorager.settings.notVibrate;
         notBoomFX.isOn = DataStorager.settings.notBoomFX;
+        notBeatmapSkin.isOn = DataStorager.settings.notBeatmapSkin;
         RelaxMod.isOn = DataStorager.settings.relaxMod;
         CinemaMod.isOn = DataStorager.settings.cinemaMod;
         MaxLife.text = DataStorager.maxLife.count.ToString();
@@ -70,6 +72,7 @@ public class Settings : MonoBehaviour
         DataStorager.settings.notVibrate = notVibrate.isOn;
         DataStorager.settings.isAutoPlay = isAutoPlay.isOn;
         DataStorager.settings.notBoomFX = notBoomFX.isOn;
+        DataStorager.settings.notBeatmapSkin = notBeatmapSkin.isOn;
         DataStorager.settings.relaxMod = RelaxMod.isOn;
         DataStorager.settings.cinemaMod = CinemaMod.isOn;
         if (!int.TryParse(CustomMaxLife.text, out int clife))

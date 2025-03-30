@@ -52,6 +52,7 @@ public class DataManager
         public bool notVibrate;
         public int offsetMs;
         public bool notBoomFX;
+        public bool notBeatmapSkin;
         public bool relaxMod;
         public bool cinemaMod;
         public string skinPath;

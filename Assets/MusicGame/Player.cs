@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using static InputStruct;
 
@@ -108,6 +110,10 @@ public class Player : MonoBehaviour
             handleNumInput();
         }
         updateGravity();
+
+        if(DateTime.Now.Day == 1 && DateTime.Now.Month == 4){
+            transform.position = new Vector3(math.cos(Time.time * 40) * 3,1 + math.sin(Time.time * 40),transform.position.z);
+        }
     }
 
     public float GetVelocity()

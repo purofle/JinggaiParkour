@@ -5139,7 +5139,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   track_texture: {fileID: 2800000, guid: 55c68f3fd83dcdb4b8ada1ad7ce9925b, type: 3}
   obstacle_texture: {fileID: 2800000, guid: 410d6f6f15d70db499f0969c1b71b4b0, type: 3}
-  side_texture: {fileID: 2800000, guid: 8244642d818cfc74599bc1bab5c8b5ed, type: 3}
+  main_obstacle_texture: {fileID: 2800000, guid: f771de4d0553695459e8dc9ee7fe5117, type: 3}
+  golden_obstacle_texture: {fileID: 2800000, guid: 9aa5101919d835b4594e577f7a6dcecd, type: 3}
+  bandeng_texture:
+  - {fileID: 2800000, guid: a45ca4aff61b33f4eb1baf4f45857977, type: 3}
+  - {fileID: 2800000, guid: 7fd185ebc0ad83e41bbb903e4746c2b6, type: 3}
+  - {fileID: 2800000, guid: 705e84b40ac5215459be77197622a996, type: 3}
+  - {fileID: 2800000, guid: 5d7f8d5bc823d2340baefe7341948cec, type: 3}
+  - {fileID: 2800000, guid: 13cdf43a1b8adcc4fbe2241b539a8aca, type: 3}
+  - {fileID: 2800000, guid: c85e9aa857500b74c94327c2708fc4d7, type: 3}
+  - {fileID: 2800000, guid: a2272966d21552e4380c8db231389fce, type: 3}
+  - {fileID: 2800000, guid: 52e7042dccec8b2459a4176427ddbaea, type: 3}
+  - {fileID: 2800000, guid: a48b22820b5cd444f903b46433b818be, type: 3}
+  side_edge_texture: {fileID: 2800000, guid: b49631a710dbed94f8c01ccb139616bf, type: 3}
   side_floor_texture: {fileID: 2800000, guid: e6f27ccbf2d314f4b9b6f6ee3cda79dd, type: 3}
 --- !u!4 &2046002661
 Transform:
