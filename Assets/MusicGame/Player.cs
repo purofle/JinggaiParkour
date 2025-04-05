@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using static InputStruct;
 
@@ -51,9 +54,19 @@ public class Player : MonoBehaviour
         velocity.z = 50 * speed;
     }
 
+    IEnumerator FixPos(){
+        while(true){
+            Vector3 pos = transform.position;
+            pos.z = beatmapManager.GetPlayingTime() * velocity.z;
+            transform.position = pos;
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        StartCoroutine(FixPos());
         updateGravity();
     }
 
@@ -97,6 +110,10 @@ public class Player : MonoBehaviour
             handleNumInput();
         }
         updateGravity();
+
+        if(DateTime.Now.Day == 1 && DateTime.Now.Month == 4){
+            transform.position = new Vector3(math.cos(Time.time * 40) * 3,1 + math.sin(Time.time * 40),transform.position.z);
+        }
     }
 
     public float GetVelocity()
@@ -192,9 +209,13 @@ public class Player : MonoBehaviour
 
     public void setCrossTime(float crotime){
         if(crotime > 0){
-            cross_time = Math.Min(crotime, MAX_CROSS_TIME);
+            if(crotime > 0.01f){
+                cross_time = Math.Min(crotime, MAX_CROSS_TIME);
+            } else {
+                cross_time = 0.01f;
+            }
         } else {
-            cross_time = 0.001f;
+            cross_time = 0.01f;
         }
     }
 
@@ -272,21 +293,21 @@ public class Player : MonoBehaviour
     }
 
     void handleNumInput(){
-        KeyCode[] firstKeys = {KeyCode.Z,KeyCode.Keypad1,KeyCode.Alpha1};
+        KeyCode[] firstKeys = DataStorager.keysettings.pad1;
         foreach( KeyCode key in firstKeys ){
             if(Input.GetKeyDown(key)){
                  moveToIndex(1);
             }
         }
 
-        KeyCode[] secondKeys = {KeyCode.X,KeyCode.Keypad2,KeyCode.Alpha2};
+        KeyCode[] secondKeys = DataStorager.keysettings.pad2;
         foreach( KeyCode key in secondKeys ){
             if(Input.GetKeyDown(key)){
                  moveToIndex(2);
             }
         }
 
-        KeyCode[] thirdKeys = {KeyCode.C,KeyCode.Keypad3,KeyCode.Alpha3};
+        KeyCode[] thirdKeys = DataStorager.keysettings.pad3;
         foreach( KeyCode key in thirdKeys ){
             if(Input.GetKeyDown(key)){
                  moveToIndex(3);
@@ -302,28 +323,28 @@ public class Player : MonoBehaviour
 
     void handleKeyInput()
     {
-        KeyCode[] leftKeys = {KeyCode.A,KeyCode.LeftArrow};
+        KeyCode[] leftKeys = DataStorager.keysettings.left;
         foreach( KeyCode key in leftKeys ){
             if(Input.GetKeyDown(key)){
                  moveLeft();
             }
         }
 
-        KeyCode[] rightKeys = {KeyCode.D,KeyCode.RightArrow};
+        KeyCode[] rightKeys = DataStorager.keysettings.right;
         foreach( KeyCode key in rightKeys ){
             if(Input.GetKeyDown(key)){
                  moveRight();
             }
         }
 
-        KeyCode[] upKeys = {KeyCode.Space,KeyCode.W,KeyCode.UpArrow};
+        KeyCode[] upKeys = DataStorager.keysettings.up;
         foreach( KeyCode key in upKeys ){
             if(Input.GetKeyDown(key)){
                  moveUp();
             }
         }
 
-        KeyCode[] downKeys = {KeyCode.DownArrow,KeyCode.S};
+        KeyCode[] downKeys = DataStorager.keysettings.down;
         foreach( KeyCode key in downKeys ){
             if(Input.GetKeyDown(key)){
                  moveDown();

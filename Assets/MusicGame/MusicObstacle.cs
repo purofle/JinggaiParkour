@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Lofelt.NiceVibrations;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MusicObstacle : MonoBehaviour
@@ -11,6 +12,7 @@ public class MusicObstacle : MonoBehaviour
     private bool isInit = true;
     private bool isLast = false;
     public bool isBest = false;
+    bool forcePerfect = false;
     public int[] track;
     public GameObject player;
     public GameObject camera;
@@ -21,13 +23,28 @@ public class MusicObstacle : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        if(DataStorager.settings.cinemaMod || track.Count() <= 0){
+            isTouched = true;
+            forcePerfect = true;
+        }
+
+        // 愚人节彩蛋
+        if(DateTime.Now.Day == 1 && DateTime.Now.Month == 4){
+            isTouched = true;
+            forcePerfect = true;
+        }
     }
 
     void GenerateBoom(GameObject theboom){
         camera.GetComponent<MusicCamera>().triggerShake();
         var newboom = Instantiate(theboom);
         newboom.transform.position = gameObject.transform.position + new Vector3(0,2.5f,0);
+
+        // 愚人节彩蛋
+        if(DateTime.Now.Day == 1 && DateTime.Now.Month == 4){
+            newboom.transform.localScale *= 100;
+            newboom.transform.position += new Vector3(0,0,20) * player.GetComponent<Player>().GetVelocity() / 50;
+        }
 
         if(isBest){
             bestSound.Play();
@@ -88,7 +105,7 @@ public class MusicObstacle : MonoBehaviour
 
         if(player.transform.position.z >= gameObject.transform.position.z && isTouched && !isInit)
         {
-            if(player.transform.position.z - gameObject.transform.position.z <= 1.25 * (player.GetComponent<Player>().GetVelocity() / 50)){
+            if(player.transform.position.z - gameObject.transform.position.z <= 1.25 * (player.GetComponent<Player>().GetVelocity() / 50) || forcePerfect){
                 // Perfect
                 GenerateBoom(perfectboom);
                 beatmapManager.AddNowPoint(1);

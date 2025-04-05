@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class LoadMaplist : MonoBehaviour
 {
-    struct BeatmapInfo {
+    public struct AnBeatmapInfo {
         public string path;
         public string title;
         public string author;
@@ -17,15 +19,18 @@ public class LoadMaplist : MonoBehaviour
     }
 
     private string dataFolder;
-    private List<BeatmapInfo> beatmapInfos = new();
+    private Dictionary<string, List<AnBeatmapInfo>> beatmapInfos = new();
 
     public GameObject SingleItem;
     public GameObject MapList;
+    public GameObject t_DisplayPanel;
+    public static GameObject DisplayPanel;
 
     static bool isDeleteState = false;
     public Text deleteStateButtonText;
 
     private void Awake() {
+        DisplayPanel = t_DisplayPanel;
         dataFolder = $"{Application.persistentDataPath}/music";
         if(!Directory.Exists(dataFolder)){
             Directory.CreateDirectory(dataFolder);
@@ -37,75 +42,67 @@ public class LoadMaplist : MonoBehaviour
             }
             string folderName = Path.GetFileName(path);
             string beat_path = $"{path}/data.sdz";
-            BeatmapInfo info = new()
+            AnBeatmapInfo info = new()
             {
                 path = folderName
             };
             foreach ( string line in File.ReadAllText(beat_path).Split("\n")){
                 string[] data = line.Split("=");
-                if(data[0].Replace(" ","") == "title"){
-                    info.title = data[1].Replace(" ","");
+                if(data[0].Trim() == "title"){
+                    info.title = data[1].Trim();
                     continue;
                 }
-                if(data[0].Replace(" ","") == "bpm"){
-                    info.BPM = float.Parse(data[1].Replace(" ",""));
+                if(data[0].Trim() == "bpm"){
+                    info.BPM = float.Parse(data[1].Trim());
                     continue;
                 }
-                if(data[0].Replace(" ","") == "author"){
-                    info.author = data[1].Replace(" ","");
+                if(data[0].Trim() == "author"){
+                    info.author = data[1].Trim();
                     continue;
                 }
-                if(data[0].Replace(" ","") == "mapper"){
-                    info.mapper = data[1].Replace(" ","");
+                if(data[0].Trim() == "mapper"){
+                    info.mapper = data[1].Trim();
                     continue;
                 }
-                if(data[0].Replace(" ","") == "level"){
-                    info.level = float.Parse(data[1].Replace(" ",""));
+                if(data[0].Trim() == "level"){
+                    info.level = float.Parse(data[1].Trim());
                     continue;
                 }
             }
-            beatmapInfos.Add(info);
+            string identify_key = info.title + info.author + info.mapper;
+            if(!beatmapInfos.ContainsKey(identify_key)){
+                beatmapInfos.Add(identify_key,new());
+            }
+            beatmapInfos[identify_key].Add(info);
+            Comparison<AnBeatmapInfo> sortComparison = (x, y) => x.level.CompareTo(y.level);
+            beatmapInfos[identify_key].Sort(sortComparison);
         }
         bool init = false;
-        foreach (BeatmapInfo info in beatmapInfos){
+        foreach (List<AnBeatmapInfo> infos in beatmapInfos.Values){
             GameObject item;
+            var info = infos[0];
             if(!init){
                 item = SingleItem;
                 init = true;
             } else {
                 item = Instantiate(SingleItem, MapList.transform);
             }
-            item.GetComponent<SingleBeatmapInfo>().title = info.title;
-            item.GetComponent<SingleBeatmapInfo>().description = $"曲师：{info.author}\n谱师：{info.mapper}";
-            item.GetComponent<SingleBeatmapInfo>().path = info.path;
-            item.GetComponent<SingleBeatmapInfo>().level = info.level;
+            item.GetComponent<SingleBeatmapInfo>().beatmapInfos = infos;
+            item.GetComponent<SingleBeatmapInfo>().diff_index = 0;
+            item.GetComponent<SingleBeatmapInfo>().LoadBeatmapInfo();
             if(File.Exists($"{dataFolder}/{info.path}/bg.png")){
                 byte[] fileData = File.ReadAllBytes($"{dataFolder}/{info.path}/bg.png");
                 Texture2D texture = new Texture2D(2, 2);
                 texture.LoadImage(fileData);
-                item.GetComponent<SingleBeatmapInfo>().setBackground(texture);
+                item.GetComponent<SingleBeatmapInfo>().SetBackground(texture);
             }
-            int max_rating = 100;
-            if(File.Exists($"{Application.persistentDataPath}/record/{info.path}.dat")){
-                var data_list = JsonConvert.DeserializeObject<List<BeatmapManager.BeatmapResult>>(File.ReadAllText($"{Application.persistentDataPath}/record/{info.path}.dat"));
-                foreach(BeatmapManager.BeatmapResult result in data_list){
-                    max_rating = Math.Min(max_rating,result.rating);
-                }
-            }
-            item.GetComponent<SingleBeatmapInfo>().max_rating = max_rating;
         }
         // 无谱面则隐藏
         if(!init){
             SingleItem.SetActive(false);
         }
     }
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
-    // Update is called once per frame
     void Update()
     {
         if(!isDeleteState){
@@ -113,6 +110,19 @@ public class LoadMaplist : MonoBehaviour
         } else {
             deleteStateButtonText.text = "取消删除";
         }
+    }
+
+    public static void OpenDisplayPanel(){
+        DisplayPanel.SetActive(true);
+        DisplayPanel.GetComponent<DisplayPanel>().LoadPanel();
+    }
+
+    public static void TurnOffDisplayPanel(){
+        DisplayPanel.SetActive(false);
+    }
+
+    public static void GameStart(){
+        SceneManager.LoadScene("MusicGame");
     }
 
     public static bool IsDeleting(){
