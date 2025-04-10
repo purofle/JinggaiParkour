@@ -507,7 +507,7 @@ public class BeatmapManager : MonoBehaviour
                 }
             }
 
-            if(Player.GetComponent<Player>().GetPos().y > 0.1f && isAutoPlay){
+            if(((auto_remain_beats[0].stack > 1 && Player.GetComponent<Player>().GetPos().y > 0.1) || (Player.GetComponent<Player>().GetPos().y > 1 + auto_remain_beats[0].y_offset)) && isAutoPlay){
                 Player.GetComponent<Player>().moveDown();
             }
 
