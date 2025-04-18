@@ -204,6 +204,7 @@ public class Player : MonoBehaviour
         isDrop = true;
         checkGrouned();
         velocity -= new Vector3(0,(float)(gameObject.transform.position.y / 0.025),0);
+        CreateNewInputImpluse(now_track);
         gameObject.GetComponent<Animator>().SetTrigger("DownFlat");
     }
 
