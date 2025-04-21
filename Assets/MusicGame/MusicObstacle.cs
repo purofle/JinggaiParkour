@@ -10,6 +10,7 @@ public class MusicObstacle : MonoBehaviour
     private bool isTouched = false;
     // private bool isPerfect = false;
     private bool isInit = true;
+    private bool isShow = false;
     private bool isLast = false;
     public bool isBest = false;
     bool forcePerfect = false;
@@ -23,7 +24,7 @@ public class MusicObstacle : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        if(DataStorager.settings.cinemaMod || track.Count() <= 0){
+        if(DataStorager.settings.cinemaMod || track.Count() <= 0 || isShow){
             isTouched = true;
             forcePerfect = true;
         }
@@ -60,8 +61,12 @@ public class MusicObstacle : MonoBehaviour
         isInit = false;
     }
 
-     public void setBestNote(){
+    public void setBestNote(){
         isBest = true;
+    }
+
+    public void setShowNote(){
+        isShow = true;
     }
 
     public void setLastNote(){
@@ -108,9 +113,9 @@ public class MusicObstacle : MonoBehaviour
             if(player.transform.position.z - gameObject.transform.position.z <= 1.25 * (player.GetComponent<Player>().GetVelocity() / 50) || forcePerfect){
                 // Perfect
                 GenerateBoom(perfectboom);
-                beatmapManager.AddNowPoint(1);
+                beatmapManager.AddNowPoint(BeatmapManager.M_TYPE.Perfect,!isShow);
                 if(isBest){
-                    beatmapManager.AddNowBest(1);
+                    beatmapManager.AddNowBest(BeatmapManager.M_TYPE.Break_P,!isShow);
                 }
                 if(isLast){
                     triggerEnd();
@@ -121,9 +126,9 @@ public class MusicObstacle : MonoBehaviour
                 // Great
                 {
                     GenerateBoom(greatboom);
-                    beatmapManager.AddNowPoint(0.95f);
+                    beatmapManager.AddNowPoint(BeatmapManager.M_TYPE.Great,!isShow);
                     if(isBest){
-                        beatmapManager.AddNowBest(0.95f);
+                        beatmapManager.AddNowBest(BeatmapManager.M_TYPE.Break_G,!isShow);
                     }
                     if(isLast){
                         triggerEnd();
@@ -138,6 +143,10 @@ public class MusicObstacle : MonoBehaviour
         if(player.transform.position.z - gameObject.transform.position.z > 10 * (player.GetComponent<Player>().GetVelocity() / 50)
             && !isInit){
             // GenerateBoom();
+            beatmapManager.AddNowPoint(BeatmapManager.M_TYPE.Miss,!isShow);
+            if(isBest){
+                beatmapManager.AddNowBest(BeatmapManager.M_TYPE.Break_M,!isShow);
+            }
             beatmapManager.Miss();
             if(isLast){
                 triggerEnd();

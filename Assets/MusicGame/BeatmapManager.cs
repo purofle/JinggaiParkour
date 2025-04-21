@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
@@ -26,6 +27,18 @@ public class BeatmapManager : MonoBehaviour
     int Combo = 0;
     int MaxCombo = 0;
     int FullCombo = 0;
+
+    public struct Point_Detail {
+        public int perfect;
+        public int great;
+        public int miss;
+        public int break_p;
+        public int break_g;
+        public int break_m;
+    }
+
+    Point_Detail point_detail;
+
     bool isPlaying = false;
     bool hasVideo = false;
     bool isVideoPlaying = false;
@@ -73,6 +86,7 @@ public class BeatmapManager : MonoBehaviour
         GAINT_BEAT_TYPE,
         BPM_TYPE,
         HIDE_FRONT_TYPE,
+        SHOW_BEAT_TYPE,
         FINISH,
     }
     struct SingleBeat {
@@ -125,6 +139,9 @@ public class BeatmapManager : MonoBehaviour
             Directory.CreateDirectory(dataFolder);
         }
         float last_time = 0;
+
+        List<SingleBeat> storage_beats = new();
+
         foreach( string line in File.ReadAllText(path).Split("\n")){
             string[] data = line.Split("=");
             if(data[0].Trim() == "bpm"){
@@ -155,6 +172,36 @@ public class BeatmapManager : MonoBehaviour
                 continue;
             }
             data = line.Split(",");
+            // 表演墩子
+            if(data[0] == "S"){
+                float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
+                float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
+                int stack_count = int.Parse(data[5]);
+                int rem_stack = 0;
+                if(data.Count() >= 7){
+                    rem_stack = int.Parse(data[6]);
+                }
+                float size = 1;
+                if(data.Count() >= 8){
+                    size = float.Parse(data[7]);
+                }
+                float y_offset = 0;
+                if(data.Count() >= 9){
+                    y_offset = float.Parse(data[8]);
+                }
+                storage_beats.Add(
+                    new SingleBeat(){
+                        type = (int)B_TYPE.SHOW_BEAT_TYPE,
+                        beat_time = beat_time,
+                        track = float.Parse(data[4]),
+                        stack = stack_count,
+                        rem_stack = rem_stack,
+                        size = size,
+                        y_offset = y_offset
+                    }
+                );
+                continue;
+            }
             if(data[0] == "D"){
                 float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
                 float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
@@ -171,7 +218,7 @@ public class BeatmapManager : MonoBehaviour
                 if(data.Count() >= 9){
                     y_offset = float.Parse(data[8]);
                 }
-                remain_beats.Add(
+                storage_beats.Add(
                     new SingleBeat(){
                         type = (int)B_TYPE.BEAT_TYPE,
                         beat_time = beat_time,
@@ -202,7 +249,7 @@ public class BeatmapManager : MonoBehaviour
                 if(data.Count() >= 9){
                     y_offset = float.Parse(data[8]);
                 }
-                remain_beats.Add(
+                storage_beats.Add(
                     new SingleBeat(){
                         type = (int)B_TYPE.BEST_BEAT_TYPE,
                         beat_time = beat_time,
@@ -218,24 +265,10 @@ public class BeatmapManager : MonoBehaviour
                 FullCombo += stack_count - rem_stack;
                 continue;
             }
-            if(data[0] == "B"){
-                float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
-                float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
-                last_time = beat_time - offset;
-                BPM = float.Parse(data[4]);
-                remain_beats.Add(
-                    new SingleBeat(){
-                        type = (int)B_TYPE.BPM_TYPE,
-                        beat_time = beat_time,
-                        BPM = float.Parse(data[4])
-                    }
-                );
-                continue;
-            }
             if(data[0] == "H"){
                 float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
                 float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
-                remain_beats.Add(
+                storage_beats.Add(
                     new SingleBeat(){
                         type = (int)B_TYPE.HIDE_FRONT_TYPE,
                         beat_time = beat_time,
@@ -243,7 +276,29 @@ public class BeatmapManager : MonoBehaviour
                 );
                 continue;
             }
+            // BPM 是刷新 storage_beats 并存入的标志。
+            if(data[0] == "B"){
+                float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
+                float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
+                last_time = beat_time - offset;
+                BPM = float.Parse(data[4]);
+                storage_beats.Add(
+                    new SingleBeat(){
+                        type = (int)B_TYPE.BPM_TYPE,
+                        beat_time = beat_time,
+                        BPM = float.Parse(data[4])
+                    }
+                );
+                storage_beats.Sort((x,y) => x.beat_time > y.beat_time ? 1 : -1);
+                remain_beats.AddRange(storage_beats);
+                storage_beats.Clear();
+                continue;
+            }
         }
+        // 最后再加一次。
+        storage_beats.Sort((x,y) => x.beat_time > y.beat_time ? 1 : -1);
+        remain_beats.AddRange(storage_beats);
+        storage_beats.Clear();
     }
 
     IEnumerator LoadMusic(string path, AudioType audioType)
@@ -310,7 +365,8 @@ public class BeatmapManager : MonoBehaviour
 
     int[] detect_list = {
         (int)B_TYPE.BEAT_TYPE,
-        (int)B_TYPE.BEST_BEAT_TYPE
+        (int)B_TYPE.BEST_BEAT_TYPE,
+        (int)B_TYPE.SHOW_BEAT_TYPE
     };
 
 
@@ -335,6 +391,10 @@ public class BeatmapManager : MonoBehaviour
         return -BeforeTime + OnPlayingTime + iniOffset;
     }
 
+    public Point_Detail GetPointDetail() {
+        return point_detail;
+    }
+
     // Update is called once per frame
     void FixedUpdate()
     {
@@ -351,6 +411,11 @@ public class BeatmapManager : MonoBehaviour
                 switch(remain_beats[0].type){
                     case (int)B_TYPE.BEAT_TYPE: {
                         obs = Instantiate(ObstacleList[0]);
+                        break;
+                    };
+                    case (int)B_TYPE.SHOW_BEAT_TYPE: {
+                        obs = Instantiate(ObstacleList[0]);
+                        obs.GetComponent<MusicObstacle>().setShowNote();
                         break;
                     };
                     case (int)B_TYPE.BEST_BEAT_TYPE: {
@@ -413,6 +478,7 @@ public class BeatmapManager : MonoBehaviour
         public float achievement;
         public int maxCombo;
         public long achieveTime;
+        public Point_Detail point_detail;
     }
 
     enum Rating {SSSp,SSS,SSp,SS,Sp,S,AAA,AA,A,BBB,BB,B,C,D,F};
@@ -537,7 +603,8 @@ public class BeatmapManager : MonoBehaviour
             rating = GetRating(),
             achievement = GetProgress() * 100,
             maxCombo = MaxCombo,
-            achieveTime = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond
+            achieveTime = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond,
+            point_detail = point_detail
         };
 
         data_list.Add(data);
@@ -554,15 +621,65 @@ public class BeatmapManager : MonoBehaviour
     public void triggerEnd(){
         isEnd = true;
     }
-    public void AddNowPoint(float point) {
-        NowPoint += point;
+
+    public enum M_TYPE {
+        Perfect,
+        Great,
+        Miss,
+        Break_P,
+        Break_G,
+        Break_M
+    }
+
+    public void AddNowPoint(M_TYPE mtype, bool hasPoint = true) {
+        if(!hasPoint){
+            return;
+        }
+        float point = 0;
+        switch(mtype){
+            case M_TYPE.Perfect: {
+                point = 1;
+                point_detail.perfect += 1;
+                break;
+            }
+            case M_TYPE.Great: {
+                point = 0.95f;
+                point_detail.great += 1;
+                break;
+            }
+            case M_TYPE.Miss: {
+                point_detail.miss += 1;
+                return;
+            }
+        }
         Combo += 1;
+        NowPoint += point;
         MaxCombo = Math.Max(Combo,MaxCombo);
         ComboDisplay.SetActive(true);
         ComboDisplay.GetComponent<Animator>().SetTrigger("NewCombo");
     }
 
-    public void AddNowBest(float point) {
+    public void AddNowBest(M_TYPE mtype, bool hasPoint = true) {
+        if(!hasPoint){
+            return;
+        }
+        float point = 0;
+        switch(mtype){
+            case M_TYPE.Break_P: {
+                point = 1;
+                point_detail.break_p += 1;
+                break;
+            }
+            case M_TYPE.Break_G: {
+                point = 0.95f;
+                point_detail.break_g += 1;
+                break;
+            }
+            case M_TYPE.Break_M: {
+                point_detail.break_m += 1;
+                return;
+            }
+        }
         NowPlusPoint += point;
     }
 
@@ -573,6 +690,10 @@ public class BeatmapManager : MonoBehaviour
 
     public int GetCombo() {
         return Combo;
+    }
+
+    public int GetMaxCombo() {
+        return MaxCombo;
     }
 
     public int GetFullCombo() {
