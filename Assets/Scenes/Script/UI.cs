@@ -35,7 +35,7 @@ public class UI : MonoBehaviour
     void Update()
     {
         MilesDisplay.GetComponent<Text>().text = miles_text + dunzi.GetComponent<Move>().GetMiles().ToString("0.00") + " m";
-        SpeedDisplay.GetComponent<Text>().text = speed_text + dunzi.GetComponent<Move>().GetVelocity().z.ToString("0.00") + " m/s";
+        SpeedDisplay.GetComponent<Text>().text = speed_text + dunzi.GetComponent<Move>().GetDisplaySpeed().ToString("0.00") + " m/s";
         CoinDisplay.GetComponent<Text>().text = coin_text + DataStorager.coin.count;
         LifeDisplay.GetComponent<Text>().text = life_text + dunzi.GetComponent<Move>().GetLife() + " / " + DataStorager.settings.CustomMaxLife;
         var buffTags = dunzi.GetComponent<Move>().buffTags;

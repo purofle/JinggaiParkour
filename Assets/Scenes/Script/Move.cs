@@ -43,6 +43,8 @@ public class Move : MonoBehaviour
     private int life = 1;
     private float offsetMiles = 0;
     private FromTo movement;
+    
+	private float maxReachedSpeed = 0; // 最大速度显示
 
     private float move_timer = 0f; // 计时器
     // Star is called once before the first execution of Update after the MonoBehaviour is created
@@ -67,6 +69,12 @@ public class Move : MonoBehaviour
     public Vector3 GetVelocity(){
         return velocity;
     }
+
+    	
+	public float GetDisplaySpeed(){
+		maxReachedSpeed = Math.Max(GetVelocity().z,maxReachedSpeed);
+		return maxReachedSpeed;
+	}
 
     public void AddOffsetMiles(float miles){
         offsetMiles += miles;
@@ -192,19 +200,37 @@ public class Move : MonoBehaviour
 
     void handleFingerInput()
     {
-        foreach (Touch touch in Input.touches)
-        {
-            if (touch.phase == TouchPhase.Began)
-            {
-                movement = new FromTo();
-                movement.first = touch.position;
-            }
-            if (touch.phase == TouchPhase.Ended)
-            {
-                movement.second = touch.position;
-                CalcAndResponse(movement);
-            }
-        }
+        var slidingMinDistance = 30; // 滑动距离灵敏度，可以根据实际情况调整测试，或者直接在设置项里塞个滑动灵敏度
+		var slidingDirectionThrehold = 0.7;// 滑动方向的灵敏度，如果滑动的方向不标准（例如往右上角滑动）则先不触发，如果后续滑动匹配了方向再触发。可以根据实际情况微调
+		foreach (Touch touch in Input.touches)
+		{
+			if (touch.phase == TouchPhase.Began)
+			{
+				this.movement = new Move.FromTo();
+				this.movement.first = touch.position;
+			}
+			// 检测逻辑是：记录输入起点，当滑动超过一定距离时，检测滑动的方向，如果方向是四个方向，则直接触发事件，并清除本次滑动
+			if (touch.phase == TouchPhase.Moved && this.movement != null)
+			{
+				var newPosition = touch.position;
+				var deltaDistance = Vector2.Distance(this.movement.first,newPosition);
+				if(deltaDistance > slidingMinDistance){ // 检测距离
+					var slidingDirectionMaxMatch = 0f;
+					slidingDirectionMaxMatch = Math.Max(slidingDirectionMaxMatch,Vector2.Dot(newPosition - this.movement.first,Vector2.up));
+					slidingDirectionMaxMatch = Math.Max(slidingDirectionMaxMatch,Vector2.Dot(newPosition - this.movement.first,Vector2.down));
+					slidingDirectionMaxMatch = Math.Max(slidingDirectionMaxMatch,Vector2.Dot(newPosition - this.movement.first,Vector2.left));
+					slidingDirectionMaxMatch = Math.Max(slidingDirectionMaxMatch,Vector2.Dot(newPosition - this.movement.first,Vector2.right));
+					if(slidingDirectionMaxMatch > slidingDirectionThrehold){ // 检测方向
+						
+						this.movement.second = touch.position;
+						
+						this.CalcAndResponse(this.movement); // 触发
+						this.movement = null; // 清除本次滑动防止重复触发
+					}
+				}
+	
+			}
+		}
     }
 
     void handleKeyInput()
