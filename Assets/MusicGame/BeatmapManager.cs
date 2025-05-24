@@ -103,6 +103,13 @@ public class BeatmapManager : MonoBehaviour
     private List<SingleBeat> remain_beats = new();
     private List<SingleBeat> auto_remain_beats = new();
 
+    int CompareResult(float a, float b)
+    {
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+    }
+
     public float getBPM(){
         return BPM;
     }
@@ -289,14 +296,14 @@ public class BeatmapManager : MonoBehaviour
                         BPM = float.Parse(data[4])
                     }
                 );
-                storage_beats.Sort((x,y) => x.beat_time > y.beat_time ? 1 : -1);
+                storage_beats.Sort((x,y) => CompareResult(x.beat_time, y.beat_time));
                 remain_beats.AddRange(storage_beats);
                 storage_beats.Clear();
                 continue;
             }
         }
         // 最后再加一次。
-        storage_beats.Sort((x,y) => x.beat_time > y.beat_time ? 1 : -1);
+        storage_beats.Sort((x,y) => CompareResult(x.beat_time,y.beat_time));
         remain_beats.AddRange(storage_beats);
         storage_beats.Clear();
     }
@@ -469,7 +476,11 @@ public class BeatmapManager : MonoBehaviour
             }
             isSaved = true;
         }
-        OnPlayingTime = MusicPlayer.time;
+        if(MusicPlayer.isPlaying){
+            OnPlayingTime = MusicPlayer.time;
+        } else {
+            OnPlayingTime += Time.fixedDeltaTime;
+        }
     }
 
 
@@ -508,6 +519,7 @@ public class BeatmapManager : MonoBehaviour
         if(ready_to_change_hidden){
             if(OnPlayingTime - BeforeTime >= should_change_hidden_time[0]){
                 ShowFrontVideo.SetBool("ShowBool",!ShowFrontVideo.GetBool("ShowBool"));
+                // Debug.Log(should_change_hidden_time.ToArray());
                 should_change_hidden_time.RemoveAt(0);
                 if(should_change_hidden_time.Count <= 0){
                     ready_to_change_hidden = false;
@@ -515,8 +527,7 @@ public class BeatmapManager : MonoBehaviour
             }
         }
         if(isAutoPlay){
-            if(!detect_list.Contains(auto_remain_beats[0].type) && auto_remain_beats[0].type != (int)B_TYPE.FINISH){
-                auto_remain_beats.RemoveAt(0);
+            if(!detect_list.Contains(auto_remain_beats[0].type)){
                 return;
             }
             // 先判断是不是需要大跳
@@ -555,7 +566,8 @@ public class BeatmapManager : MonoBehaviour
                 }
             }
         }
-        while(Player.GetComponent<Player>().GetPos().z >= (auto_remain_beats[0].beat_time + iniOffset - autoShift) * Player.GetComponent<Player>().GetVelocity() && auto_remain_beats[0].type != (int)B_TYPE.FINISH){
+        while(Player.GetComponent<Player>().GetPos().z >= (auto_remain_beats[0].beat_time + iniOffset - autoShift) * Player.GetComponent<Player>().GetVelocity()
+            && detect_list.Contains(auto_remain_beats[0].type)){
             int[] should_tracks = toTouchTracks(auto_remain_beats[0].track, remain_beats[0].size);
 
             // 补足 Auto 的痛（
