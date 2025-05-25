@@ -28,7 +28,10 @@ public class BeatmapManager : MonoBehaviour
     int MaxCombo = 0;
     int FullCombo = 0;
 
-    public struct Point_Detail {
+    int placed_count = 0;
+
+    public struct Point_Detail
+    {
         public int perfect;
         public int great;
         public int miss;
@@ -225,6 +228,12 @@ public class BeatmapManager : MonoBehaviour
                 if(data.Count() >= 9){
                     y_offset = float.Parse(data[8]);
                 }
+
+                if (stack_count - rem_stack <= 0)
+                {
+                    continue;
+                }
+
                 storage_beats.Add(
                     new SingleBeat(){
                         type = (int)B_TYPE.BEAT_TYPE,
@@ -256,6 +265,12 @@ public class BeatmapManager : MonoBehaviour
                 if(data.Count() >= 9){
                     y_offset = float.Parse(data[8]);
                 }
+
+                if (stack_count - rem_stack <= 0)
+                {
+                    continue;
+                }
+
                 storage_beats.Add(
                     new SingleBeat(){
                         type = (int)B_TYPE.BEST_BEAT_TYPE,
@@ -418,15 +433,18 @@ public class BeatmapManager : MonoBehaviour
                 switch(remain_beats[0].type){
                     case (int)B_TYPE.BEAT_TYPE: {
                         obs = Instantiate(ObstacleList[0]);
+                        obs.GetComponent<MusicObstacle>().index = placed_count++;
                         break;
                     };
                     case (int)B_TYPE.SHOW_BEAT_TYPE: {
-                        obs = Instantiate(ObstacleList[0]);
+                        obs = Instantiate(ObstacleList[2]);
+                        obs.GetComponent<MusicObstacle>().index = placed_count++;
                         obs.GetComponent<MusicObstacle>().setShowNote();
                         break;
                     };
                     case (int)B_TYPE.BEST_BEAT_TYPE: {
                         obs = Instantiate(ObstacleList[1]);
+                        obs.GetComponent<MusicObstacle>().index = placed_count++;
                         obs.GetComponent<MusicObstacle>().setBestNote();
                         break;
                     };

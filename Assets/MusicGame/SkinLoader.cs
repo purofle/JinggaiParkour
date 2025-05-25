@@ -10,6 +10,7 @@ public class SkinLoader : MonoBehaviour
     public Texture2D obstacle_texture;
     public Texture2D main_obstacle_texture;
     public Texture2D golden_obstacle_texture;
+    public Texture2D show_obstacle_texture;
     public Texture2D[] bandeng_texture;
     public Texture2D side_edge_texture;
     public Texture2D side_floor_texture;
@@ -60,6 +61,11 @@ public class SkinLoader : MonoBehaviour
         if(File.Exists($"{skin_path}/golden_obstacle.png")){
             byte[] fileData = File.ReadAllBytes($"{skin_path}/golden_obstacle.png");
             golden_obstacle_texture.LoadImage(fileData);
+        }
+
+        if(File.Exists($"{skin_path}/show_obstacle.png")){
+            byte[] fileData = File.ReadAllBytes($"{skin_path}/show_obstacle.png");
+            show_obstacle_texture.LoadImage(fileData);
         }
 
         int max_bandeng_skin_index = -1;

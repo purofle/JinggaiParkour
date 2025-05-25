@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class MusicObstacle : MonoBehaviour
 {
-
+    public int index = 0;
     private bool isTouched = false;
     // private bool isPerfect = false;
     private bool isInit = true;
@@ -20,6 +20,7 @@ public class MusicObstacle : MonoBehaviour
     public GameObject perfectboom;
     public GameObject greatboom;
     public AudioSource bestSound;
+    public GameObject boomSounds;
     public BeatmapManager beatmapManager;
     // Start is called before the first frame update
     void Start()
@@ -47,7 +48,10 @@ public class MusicObstacle : MonoBehaviour
             newboom.transform.position += new Vector3(0,0,20) * player.GetComponent<Player>().GetVelocity() / 50;
         }
 
-        if(isBest){
+        // 播放声音
+        boomSounds.transform.GetChild(index % boomSounds.transform.childCount).GetComponent<AudioSource>().Play();
+        if (isBest)
+        {
             bestSound.Play();
         }
 

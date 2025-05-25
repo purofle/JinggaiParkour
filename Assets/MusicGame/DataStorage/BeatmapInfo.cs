@@ -1,4 +1,4 @@
 public class BeatmapInfo
 {
-    public static string beatmap_name = "失败作少女";
+    public static string beatmap_name = "幼稚趣_0";
 }
