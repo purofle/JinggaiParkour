@@ -8,6 +8,8 @@ using static InputStruct;
 
 public class Player : MonoBehaviour
 {
+    public static Player targetPlayer;
+
     public GameObject center;
     private Vector3 velocity;
     public int now_track = 2;
@@ -49,18 +51,25 @@ public class Player : MonoBehaviour
         }
     }
 
-    void Awake(){
+    void Awake()
+    {
         float speed = DataStorager.settings.MusicGameSpeed > 0 ? DataStorager.settings.MusicGameSpeed : 1;
         velocity.z = 50 * speed;
+        targetPlayer = this;
     }
 
     IEnumerator FixPos(){
         while(true){
-            Vector3 pos = transform.position;
-            pos.z = beatmapManager.GetPlayingTime() * velocity.z;
-            transform.position = pos;
+            ChangePos();
             yield return new WaitForSeconds(0.5f);
         }
+    }
+
+    public void ChangePos()
+    {
+        Vector3 pos = transform.position;
+        pos.z = beatmapManager.GetPlayingTime() * velocity.z;
+        transform.position = pos;
     }
 
     // Start is called before the first frame update

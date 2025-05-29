@@ -1,11 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using TMPro;
+using Unity.Entities.UniversalDelegates;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -48,8 +48,9 @@ public class BeatmapManager : MonoBehaviour
     bool isEnd = false;
     bool isSaved = false;
     bool isAutoPlay = DataStorager.settings.isAutoPlay;
+    bool isPractcing = false;
     float distance = 10;
-    public GameObject Player;
+    public Player Player;
     public GameObject[] ObstacleList;
     public AudioSource MusicPlayer;
     public RawImage BackForVideo;
@@ -61,14 +62,21 @@ public class BeatmapManager : MonoBehaviour
     public GameObject ResultCanvas;
     public GameObject AutoPlayImage;
     public GameObject CinemaImage;
+    public GameObject PracticingImage;
     public GameObject RelaxModImage;
     public Animator ShowFrontVideo;
     public Animator MapInfo;
+    public GameObject GetIntoButton;
+    public GameObject PracticingObject;
+    public GameObject noteParent;
 
     // 谱面信息展示
     public RawImage DisplayInfoImage;
     public TMP_Text DisplayInfoText;
     public LevelDisplayer levelDisplayer;
+
+    public MusicCamera camera;
+    public LandGenerator landGenerator;
 
     // 自动游玩变量
     bool last_record = false;
@@ -76,9 +84,13 @@ public class BeatmapManager : MonoBehaviour
     float should_change_time;
     bool ready_to_change_bpm = false;
     bool ready_to_change_hidden = false;
+    bool ready_to_change_camera = false;
     List<float> should_change_bpm = new();
     List<float> should_change_bpm_time = new();
     List<float> should_change_hidden_time = new();
+    List<float> should_change_camera_angle = new();
+    List<float> should_change_camera_cross_time = new();
+    List<float> should_change_camera_time = new();
     float autoShift = 0.0f;
 
     string dataFolder;
@@ -90,10 +102,12 @@ public class BeatmapManager : MonoBehaviour
         BPM_TYPE,
         HIDE_FRONT_TYPE,
         SHOW_BEAT_TYPE,
+        CAMERA_TYPE,
         FINISH,
     }
-    struct SingleBeat {
-        public int type;
+    struct SingleBeat
+    {
+        public B_TYPE type;
         public float beat_time;
         public float track;
         public int stack;
@@ -101,6 +115,8 @@ public class BeatmapManager : MonoBehaviour
         public float size;
         public float y_offset;
         public float BPM;
+        public float angle;
+        public float cross_time;
     }
 
     private List<SingleBeat> remain_beats = new();
@@ -117,22 +133,47 @@ public class BeatmapManager : MonoBehaviour
         return BPM;
     }
 
-    public void LoadData(string beatmap_name){
-        if(File.Exists($"{dataFolder}/{beatmap_name}/music.wav")){
+    float getValue(string value, float default_value = 0) {
+        string trimed = value.Trim();
+        if (trimed.Length == 0) {
+            return default_value;
+        }
+        return float.Parse(value);
+    }
+
+    int getIntValue(string value, int default_value = 0) {
+        string trimed = value.Trim();
+        if (trimed.Length == 0) {
+            return default_value;
+        }
+        return int.Parse(value);
+    }
+
+    void LoadResource(string beatmap_name)
+    {
+        if (File.Exists($"{dataFolder}/{beatmap_name}/music.wav"))
+        {
             StartCoroutine(LoadMusic($"file://{dataFolder}/{beatmap_name}/music.wav", AudioType.WAV));
-        } else if(File.Exists($"{dataFolder}/{beatmap_name}/music.mp3")){
+        }
+        else if (File.Exists($"{dataFolder}/{beatmap_name}/music.mp3"))
+        {
             StartCoroutine(LoadMusic($"file://{dataFolder}/{beatmap_name}/music.mp3", AudioType.MPEG));
-        };
+        }
+        ;
         // 读取图片或视频
-        if(File.Exists($"{dataFolder}/{beatmap_name}/bg.mp4")){
+        if (File.Exists($"{dataFolder}/{beatmap_name}/bg.mp4"))
+        {
             videoPlayer.targetTexture = (RenderTexture)BackForVideo.texture;
             videoPlayer.playOnAwake = false;
             videoPlayer.url = $"file://{dataFolder}/{beatmap_name}/bg.mp4";
             hasVideo = true;
-        } else {
+        }
+        else
+        {
             BackForVideo.GameObject().SetActive(false);
         }
-        if(File.Exists($"{dataFolder}/{beatmap_name}/bg.png")){
+        if (File.Exists($"{dataFolder}/{beatmap_name}/bg.png"))
+        {
             byte[] fileData = File.ReadAllBytes($"{dataFolder}/{beatmap_name}/bg.png");
             Texture2D texture = new Texture2D(2, 2);
             texture.LoadImage(fileData); // 自动调整纹理大小
@@ -143,90 +184,68 @@ public class BeatmapManager : MonoBehaviour
             DisplayInfoImage.texture = texture;
             DisplayInfoImage.GetComponent<AspectRatioFitter>().aspectRatio = (float)texture.width / texture.height;
         }
+    }
+
+    public void LoadData(string beatmap_name)
+    {
         // 读取谱面
         string path = $"{dataFolder}/{beatmap_name}/data.sdz";
-        if(!Directory.Exists(dataFolder)){
+        if (!Directory.Exists(dataFolder))
+        {
             Directory.CreateDirectory(dataFolder);
         }
         float last_time = 0;
 
         List<SingleBeat> storage_beats = new();
 
-        foreach( string line in File.ReadAllText(path).Split("\n")){
+        foreach (string line in File.ReadAllText(path).Split("\n"))
+        {
             string[] data = line.Split("=");
-            if(data[0].Trim() == "bpm"){
-                BPM = float.Parse(data[1].Trim());
+            if (data[0].Trim() == "bpm")
+            {
+                BPM = getValue(data[1], 120);
                 remain_beats.Add(
-                    new SingleBeat(){
-                        type = (int)B_TYPE.BPM_TYPE,
+                    new SingleBeat()
+                    {
+                        type = B_TYPE.BPM_TYPE,
                         beat_time = 0,
-                        BPM = float.Parse(data[1].Trim())
+                        BPM = getValue(data[1], 120)
                     }
                 );
                 continue;
             }
-            if(data[0].Trim() == "offset"){
-                offset += float.Parse(data[1].Trim());
+            if (data[0].Trim() == "offset")
+            {
+                offset += getValue(data[1]);
                 continue;
             }
-            if(data[0].Trim() == "bg_offset"){
-                videoOffset = float.Parse(data[1].Trim());
+            if (data[0].Trim() == "bg_offset")
+            {
+                videoOffset = getValue(data[1]);
                 continue;
             }
-            if(data[0].Trim() == "title"){
+            if (data[0].Trim() == "title")
+            {
                 DisplayInfoText.text = data[1].Trim();
                 continue;
             }
-            if(data[0].Trim() == "level"){
-                levelDisplayer.level = float.Parse(data[1].Trim());
+            if (data[0].Trim() == "level")
+            {
+                levelDisplayer.level = getValue(data[1]);
                 continue;
             }
+
             data = line.Split(",");
-            // 表演墩子
-            if(data[0] == "S"){
-                float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
-                float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
-                int stack_count = int.Parse(data[5]);
+            // 石墩音符
+            if ("SDX".Contains(data[0]) && data[0].Length > 0)
+            {
+                float slice_beat = getValue(data[3]) > 0 ? getValue(data[2]) / getValue(data[3]) : 0;
+                float beat_time = last_time + (getValue(data[1]) + slice_beat) * (60 / BPM) + offset;
+                int stack_count = getIntValue(data[5], 1);
                 int rem_stack = 0;
-                if(data.Count() >= 7){
-                    rem_stack = int.Parse(data[6]);
-                }
-                float size = 1;
-                if(data.Count() >= 8){
-                    size = float.Parse(data[7]);
-                }
-                float y_offset = 0;
-                if(data.Count() >= 9){
-                    y_offset = float.Parse(data[8]);
-                }
-                storage_beats.Add(
-                    new SingleBeat(){
-                        type = (int)B_TYPE.SHOW_BEAT_TYPE,
-                        beat_time = beat_time,
-                        track = float.Parse(data[4]),
-                        stack = stack_count,
-                        rem_stack = rem_stack,
-                        size = size,
-                        y_offset = y_offset
-                    }
-                );
-                continue;
-            }
-            if(data[0] == "D"){
-                float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
-                float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
-                int stack_count = int.Parse(data[5]);
-                int rem_stack = 0;
-                if(data.Count() >= 7){
-                    rem_stack = int.Parse(data[6]);
-                }
-                float size = 1;
-                if(data.Count() >= 8){
-                    size = float.Parse(data[7]);
-                }
-                float y_offset = 0;
-                if(data.Count() >= 9){
-                    y_offset = float.Parse(data[8]);
+                if (data.Count() >= 7)
+                {
+                    rem_stack = getIntValue(data[6], 0);
                 }
 
                 if (stack_count - rem_stack <= 0)
@@ -234,91 +253,101 @@ public class BeatmapManager : MonoBehaviour
                     continue;
                 }
 
-                storage_beats.Add(
-                    new SingleBeat(){
-                        type = (int)B_TYPE.BEAT_TYPE,
-                        beat_time = beat_time,
-                        track = float.Parse(data[4]),
-                        stack = stack_count,
-                        rem_stack = rem_stack,
-                        size = size,
-                        y_offset = y_offset
-                    }
-                );
-                MaxPoint += stack_count - rem_stack;
-                FullCombo += stack_count - rem_stack;
-                continue;
-            }
-            if(data[0] == "X"){
-                float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
-                float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
-                int stack_count = int.Parse(data[5]);
-                int rem_stack = 0;
-                if(data.Count() >= 7){
-                    rem_stack = int.Parse(data[6]);
-                }
                 float size = 1;
-                if(data.Count() >= 8){
-                    size = float.Parse(data[7]);
+                if (data.Count() >= 8)
+                {
+                    size = getValue(data[7], 1);
                 }
                 float y_offset = 0;
-                if(data.Count() >= 9){
-                    y_offset = float.Parse(data[8]);
-                }
-
-                if (stack_count - rem_stack <= 0)
+                if (data.Count() >= 9)
                 {
-                    continue;
+                    y_offset = getValue(data[8], 0);
                 }
 
+                B_TYPE type = 0;
+                switch (data[0])
+                {
+                    case "S": type = B_TYPE.SHOW_BEAT_TYPE; break;
+                    case "D": type = B_TYPE.BEAT_TYPE; break;
+                    case "X": type = B_TYPE.BEST_BEAT_TYPE; break;
+                }
                 storage_beats.Add(
-                    new SingleBeat(){
-                        type = (int)B_TYPE.BEST_BEAT_TYPE,
+                    new SingleBeat()
+                    {
+                        type = type,
                         beat_time = beat_time,
-                        track = float.Parse(data[4]),
+                        track = getValue(data[4], 2),
                         stack = stack_count,
                         rem_stack = rem_stack,
                         size = size,
                         y_offset = y_offset
                     }
                 );
-                MaxPoint += stack_count - rem_stack;
-                MaxPlusPoint += stack_count - rem_stack;
-                FullCombo += stack_count - rem_stack;
+
+                if ("DX".Contains(data[0]))
+                {
+                    MaxPoint += stack_count - rem_stack;
+                    FullCombo += stack_count - rem_stack;
+                    if (data[0] == "X")
+                    {
+                        MaxPlusPoint += stack_count - rem_stack;
+                    }
+                }
                 continue;
             }
-            if(data[0] == "H"){
-                float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
-                float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
+            if (data[0] == "H")
+            {
+                float slice_beat = getValue(data[3]) > 0 ? getValue(data[2]) / getValue(data[3]) : 0;
+                float beat_time = last_time + (getValue(data[1]) + slice_beat) * (60 / BPM) + offset;
                 storage_beats.Add(
-                    new SingleBeat(){
-                        type = (int)B_TYPE.HIDE_FRONT_TYPE,
+                    new SingleBeat()
+                    {
+                        type = B_TYPE.HIDE_FRONT_TYPE,
                         beat_time = beat_time,
+                    }
+                );
+                continue;
+            }
+            if (data[0] == "C")
+            {
+                float slice_beat = getValue(data[3]) > 0 ? getValue(data[2]) / getValue(data[3]) : 0;
+                float beat_time = last_time + (getValue(data[1]) + slice_beat) * (60 / BPM) + offset;
+                float angle = getValue(data[5], 360);
+                float cross_time = getValue(data[4], 0.5f) * (60 / BPM);
+                storage_beats.Add(
+                    new SingleBeat()
+                    {
+                        type = B_TYPE.CAMERA_TYPE,
+                        beat_time = beat_time,
+                        angle = angle,
+                        cross_time = cross_time
                     }
                 );
                 continue;
             }
             // BPM 是刷新 storage_beats 并存入的标志。
-            if(data[0] == "B"){
-                float slice_beat = float.Parse(data[3]) > 0 ? float.Parse(data[2]) / float.Parse(data[3]) : 0;
-                float beat_time = last_time + (float.Parse(data[1]) + slice_beat) * (60 / BPM) + offset;
+            if (data[0] == "B")
+            {
+                float slice_beat = getValue(data[3]) > 0 ? getValue(data[2]) / getValue(data[3]) : 0;
+                float beat_time = last_time + (getValue(data[1]) + slice_beat) * (60 / BPM) + offset;
                 last_time = beat_time - offset;
-                BPM = float.Parse(data[4]);
+                BPM = getValue(data[4], 120);
                 storage_beats.Add(
-                    new SingleBeat(){
-                        type = (int)B_TYPE.BPM_TYPE,
+                    new SingleBeat()
+                    {
+                        type = B_TYPE.BPM_TYPE,
                         beat_time = beat_time,
-                        BPM = float.Parse(data[4])
+                        BPM = getValue(data[4], 120)
                     }
                 );
-                storage_beats.Sort((x,y) => CompareResult(x.beat_time, y.beat_time));
+                storage_beats.Sort((x, y) => CompareResult(x.beat_time, y.beat_time));
                 remain_beats.AddRange(storage_beats);
                 storage_beats.Clear();
                 continue;
             }
         }
         // 最后再加一次。
-        storage_beats.Sort((x,y) => CompareResult(x.beat_time,y.beat_time));
+        storage_beats.Sort((x, y) => CompareResult(x.beat_time, y.beat_time));
         remain_beats.AddRange(storage_beats);
         storage_beats.Clear();
     }
@@ -358,16 +387,10 @@ public class BeatmapManager : MonoBehaviour
         Application.targetFrameRate = 300;
 
         dataFolder = $"{Application.persistentDataPath}/music";
-        LoadData(BeatmapInfo.beatmap_name);
-        remain_beats.Add(
-            new SingleBeat(){
-                type = (int)B_TYPE.FINISH,
-                track = 2
-            }
-        );
+        LoadResource(BeatmapInfo.beatmap_name);
+        LoadBeatmap();
         ComboDisplay.SetActive(false);
         ResultCanvas.SetActive(false);
-        auto_remain_beats.AddRange(remain_beats);
         if(!isAutoPlay){
             AutoPlayImage.SetActive(false);
         }
@@ -379,16 +402,75 @@ public class BeatmapManager : MonoBehaviour
         }
     }
 
+    private void LoadBeatmap(float start_time = 0)
+    {
+        for (int i = 0; i < noteParent.transform.childCount; i++)
+        {
+            Destroy(noteParent.transform.GetChild(0).gameObject);
+        }
+        remain_beats.Clear();
+        LoadData(BeatmapInfo.beatmap_name);
+        remain_beats.Add(
+            new SingleBeat()
+            {
+                type = B_TYPE.FINISH,
+                track = 2
+            }
+        );
+
+        for (int i = 0; i < remain_beats.Count; i++)
+        {
+            if (remain_beats[0].type == B_TYPE.FINISH)
+            {
+                break;
+            }
+            if (remain_beats[0].beat_time >= start_time)
+            {
+                break;
+            }
+            remain_beats.RemoveAt(0);
+        }
+
+        auto_remain_beats.Clear();
+        auto_remain_beats.AddRange(remain_beats);
+    }
+
+    public void ReStart(float start_time)
+    {
+        ReloadFromTime(start_time);
+        Time.timeScale = 1;
+        MusicPlayer.time = start_time;
+        MusicPlayer.Play();
+    }
+
+    public void ReloadFromTime(float start_time)
+    {
+        OnPlayingTime = start_time;
+        Player.ChangePos();
+        landGenerator.RespawnLand();
+        LoadBeatmap(start_time);
+    }
+
+    public void GetIntoPractice()
+    {
+        PracticingImage.SetActive(true);
+        GetIntoButton.SetActive(false);
+        PracticingObject.SetActive(true);
+        isPractcing = true;
+        MusicPlayer.Pause();
+        Time.timeScale = 0;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
 
     }
 
-    int[] detect_list = {
-        (int)B_TYPE.BEAT_TYPE,
-        (int)B_TYPE.BEST_BEAT_TYPE,
-        (int)B_TYPE.SHOW_BEAT_TYPE
+    B_TYPE[] detect_list = {
+        B_TYPE.BEAT_TYPE,
+        B_TYPE.BEST_BEAT_TYPE,
+        B_TYPE.SHOW_BEAT_TYPE
     };
 
 
@@ -425,34 +507,33 @@ public class BeatmapManager : MonoBehaviour
 
         while( detect_list.Contains(remain_beats[0].type) && remain_beats[0].beat_time - OnPlayingTime + BeforeTime < 5){
             Vector3 place_pos;
-            place_pos.z = (remain_beats[0].beat_time + iniOffset) * Player.GetComponent<Player>().GetVelocity();
+            place_pos.z = (remain_beats[0].beat_time + iniOffset) * Player.GetVelocity();
             place_pos.x = (float)((remain_beats[0].track - 2) * 3);
             for(int i = remain_beats[0].rem_stack;i < remain_beats[0].stack; i++){
                 place_pos.y = remain_beats[0].y_offset + i * 2 * remain_beats[0].size;
                 GameObject obs;
                 switch(remain_beats[0].type){
-                    case (int)B_TYPE.BEAT_TYPE: {
-                        obs = Instantiate(ObstacleList[0]);
-                        obs.GetComponent<MusicObstacle>().index = placed_count++;
+                    case B_TYPE.BEAT_TYPE: {
+                        obs = Instantiate(ObstacleList[0], noteParent.transform);
                         break;
                     };
-                    case (int)B_TYPE.SHOW_BEAT_TYPE: {
-                        obs = Instantiate(ObstacleList[2]);
-                        obs.GetComponent<MusicObstacle>().index = placed_count++;
+                    case B_TYPE.SHOW_BEAT_TYPE: {
+                        obs = Instantiate(ObstacleList[2], noteParent.transform);
                         obs.GetComponent<MusicObstacle>().setShowNote();
                         break;
                     };
-                    case (int)B_TYPE.BEST_BEAT_TYPE: {
-                        obs = Instantiate(ObstacleList[1]);
-                        obs.GetComponent<MusicObstacle>().index = placed_count++;
+                    case B_TYPE.BEST_BEAT_TYPE: {
+                        obs = Instantiate(ObstacleList[1], noteParent.transform);
                         obs.GetComponent<MusicObstacle>().setBestNote();
                         break;
                     };
                     default: {
-                        obs = Instantiate(ObstacleList[0]);
+                        obs = Instantiate(ObstacleList[0], noteParent.transform);
                         break;
                     }
                 };
+                obs.GetComponent<MusicObstacle>().index = placed_count++;
+                obs.GetComponent<MusicObstacle>().size = remain_beats[0].size;
                 obs.GetComponent<MusicObstacle>().setNote();
                 obs.GetComponent<MusicObstacle>().track = toTouchTracks(remain_beats[0].track, remain_beats[0].size);
                 obs.transform.position = place_pos;
@@ -460,13 +541,14 @@ public class BeatmapManager : MonoBehaviour
                 if(remain_beats[0].size != 1){
                     obs.transform.localScale *= (float)4 / 3;
                 }
-                if(remain_beats[1].type == (int)B_TYPE.FINISH){
+                if(remain_beats[1].type == B_TYPE.FINISH
+                    && !isPractcing){
                     obs.GetComponent<MusicObstacle>().setLastNote();
                 }
             }
             remain_beats.RemoveAt(0);
         }
-        if(remain_beats[0].type == (int)B_TYPE.BPM_TYPE || remain_beats[0].type == (int)B_TYPE.HIDE_FRONT_TYPE){
+        if(!detect_list.Contains(remain_beats[0].type) && remain_beats[0].type != B_TYPE.FINISH){
             remain_beats.RemoveAt(0);
         }
         if(hasVideo && !isVideoPlaying){
@@ -488,7 +570,10 @@ public class BeatmapManager : MonoBehaviour
         if(isEnd && !isSaved){
             ResultCanvas.SetActive(true);
             MapInfo.SetTrigger("ResultTrigger");
-            if(!isAutoPlay && !DataStorager.settings.relaxMod && !DataStorager.settings.cinemaMod
+            if(!isAutoPlay
+                && !DataStorager.settings.relaxMod
+                && !DataStorager.settings.cinemaMod
+                && !isPractcing
                 && !(DateTime.Now.Day == 1 && DateTime.Now.Month == 4) ){
                 SaveResult();
             }
@@ -513,23 +598,33 @@ public class BeatmapManager : MonoBehaviour
     enum Rating {SSSp,SSS,SSp,SS,Sp,S,AAA,AA,A,BBB,BB,B,C,D,F};
 
     void autoplay() {
-        if(auto_remain_beats[0].type == (int)B_TYPE.BPM_TYPE){
+        if(auto_remain_beats[0].type == B_TYPE.BPM_TYPE){
             ready_to_change_bpm = true;
             should_change_bpm_time.Add(auto_remain_beats[0].beat_time);
             should_change_bpm.Add(auto_remain_beats[0].BPM);
             auto_remain_beats.RemoveAt(0);
         }
-        if(auto_remain_beats[0].type == (int)B_TYPE.HIDE_FRONT_TYPE){
+        if(auto_remain_beats[0].type == B_TYPE.HIDE_FRONT_TYPE){
             ready_to_change_hidden = true;
             should_change_hidden_time.Add(auto_remain_beats[0].beat_time);
             auto_remain_beats.RemoveAt(0);
         }
-        if(ready_to_change_bpm){
-            if(OnPlayingTime - BeforeTime >= should_change_bpm_time[0]){
+        if(auto_remain_beats[0].type == B_TYPE.CAMERA_TYPE){
+            ready_to_change_camera = true;
+            should_change_camera_time.Add(auto_remain_beats[0].beat_time);
+            should_change_camera_angle.Add(auto_remain_beats[0].angle);
+            should_change_camera_cross_time.Add(auto_remain_beats[0].cross_time);
+            auto_remain_beats.RemoveAt(0);
+        }
+        if (ready_to_change_bpm)
+        {
+            if (OnPlayingTime - BeforeTime >= should_change_bpm_time[0])
+            {
                 BPM = should_change_bpm[0];
                 should_change_bpm_time.RemoveAt(0);
                 should_change_bpm.RemoveAt(0);
-                if(should_change_bpm_time.Count <= 0){
+                if (should_change_bpm_time.Count <= 0)
+                {
                     ready_to_change_bpm = false;
                 }
             }
@@ -544,72 +639,99 @@ public class BeatmapManager : MonoBehaviour
                 }
             }
         }
-        if(isAutoPlay){
-            if(!detect_list.Contains(auto_remain_beats[0].type)){
+        if (ready_to_change_camera)
+        {
+            if (OnPlayingTime - BeforeTime >= should_change_camera_time[0])
+            {
+                camera.triggerRotate(should_change_camera_angle[0], should_change_camera_cross_time[0]);
+                should_change_camera_time.RemoveAt(0);
+                should_change_camera_angle.RemoveAt(0);
+                should_change_camera_cross_time.RemoveAt(0);
+                if(should_change_camera_time.Count <= 0){
+                    ready_to_change_camera = false;
+                }
+            }
+        }
+        if (isAutoPlay)
+        {
+            if (!detect_list.Contains(auto_remain_beats[0].type))
+            {
                 return;
             }
             // 先判断是不是需要大跳
-            if((auto_remain_beats[0].stack > 1 || auto_remain_beats[0].y_offset > 1) && Player.GetComponent<Player>().GetPos().y < 0.01f){
-                float jump_should_remain_time = (float)Math.Sqrt(Math.Pow(2,(int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size + auto_remain_beats[0].y_offset,2) + 1) * 2 / Player.GetComponent<Player>().GetGravity());
-                if(Player.GetComponent<Player>().GetPos().z / Player.GetComponent<Player>().GetVelocity() + jump_should_remain_time - autoShift > auto_remain_beats[0].beat_time + iniOffset){
-                    int jump_times = (int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size + auto_remain_beats[0].y_offset,2);
-                    for(int k = 0;k < jump_times; k++){
-                        Player.GetComponent<Player>().moveUp();
+            if ((auto_remain_beats[0].stack > 1 || auto_remain_beats[0].y_offset > 1) && Player.GetPos().y < 0.01f)
+            {
+                float jump_should_remain_time = (float)Math.Sqrt(Math.Pow(2, (int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size + auto_remain_beats[0].y_offset, 2) + 1) * 2 / Player.GetGravity());
+                if (Player.GetPos().z / Player.GetComponent<Player>().GetVelocity() + jump_should_remain_time - autoShift > auto_remain_beats[0].beat_time + iniOffset)
+                {
+                    int jump_times = (int)Math.Log(auto_remain_beats[0].stack * auto_remain_beats[0].size + auto_remain_beats[0].y_offset, 2);
+                    for (int k = 0; k < jump_times; k++)
+                    {
+                        Player.moveUp();
                     }
                 }
             }
             int[] should_tracks = toTouchTracks(auto_remain_beats[0].track, remain_beats[0].size);
-            if(!should_tracks.Contains(Player.GetComponent<Player>().GetNowTrack()) && (should_tracks.Count() > 0)){
-                if(!last_record){
+            if (!should_tracks.Contains(Player.GetNowTrack()) && (should_tracks.Count() > 0))
+            {
+                if (!last_record)
+                {
                     last_change_time = OnPlayingTime - BeforeTime;
                     last_record = true;
                     float switch_time = (auto_remain_beats[0].beat_time - last_change_time) * 1 / 2;
-                    if(switch_time < 0.25){
+                    if (switch_time < 0.25)
+                    {
                         switch_time = 0;
                     }
                     should_change_time = last_change_time + switch_time;
                 }
-                if(OnPlayingTime - BeforeTime >= should_change_time){
-                    int should_move_times = should_tracks[0] - Player.GetComponent<Player>().GetNowTrack();
+                if (OnPlayingTime - BeforeTime >= should_change_time)
+                {
+                    int should_move_times = should_tracks[0] - Player.GetNowTrack();
                     // 移动
-                    if(should_move_times > 0){
-                        for(int j = 0; j < should_move_times; j++){
-                            Player.GetComponent<Player>().moveRight();
+                    if (should_move_times > 0)
+                    {
+                        for (int j = 0; j < should_move_times; j++)
+                        {
+                            Player.moveRight();
                         }
-                    } else {
-                        for(int j = 0; j < -should_move_times; j++){
-                            Player.GetComponent<Player>().moveLeft();
+                    }
+                    else
+                    {
+                        for (int j = 0; j < -should_move_times; j++)
+                        {
+                            Player.moveLeft();
                         }
                     }
                 }
             }
         }
-        while(Player.GetComponent<Player>().GetPos().z >= (auto_remain_beats[0].beat_time + iniOffset - autoShift) * Player.GetComponent<Player>().GetVelocity()
+        while(Player.GetPos().z >= (auto_remain_beats[0].beat_time + iniOffset - autoShift) * Player.GetVelocity()
             && detect_list.Contains(auto_remain_beats[0].type)){
             int[] should_tracks = toTouchTracks(auto_remain_beats[0].track, remain_beats[0].size);
 
             // 补足 Auto 的痛（
-            if(!should_tracks.Contains(Player.GetComponent<Player>().GetNowTrack()) && (should_tracks.Count() > 0) && isAutoPlay){
-                int should_move_times = should_tracks[0] - Player.GetComponent<Player>().GetNowTrack();
+            if(!should_tracks.Contains(Player.GetNowTrack()) && (should_tracks.Count() > 0) && isAutoPlay){
+                int should_move_times = should_tracks[0] - Player.GetNowTrack();
                 // 移动
                 if(should_move_times > 0){
                     for(int j = 0; j < should_move_times; j++){
-                        Player.GetComponent<Player>().moveRight();
+                        Player.moveRight();
                     }
                 } else {
                     for(int j = 0; j < -should_move_times; j++){
-                        Player.GetComponent<Player>().moveLeft();
+                        Player.moveLeft();
                     }
                 }
             }
 
-            if(((auto_remain_beats[0].stack > 1 && Player.GetComponent<Player>().GetPos().y > 0.1) || (Player.GetComponent<Player>().GetPos().y > 1 + auto_remain_beats[0].y_offset)) && isAutoPlay){
-                Player.GetComponent<Player>().moveDown();
+            if(((auto_remain_beats[0].stack > 1 && Player.GetPos().y > 0.1) || (Player.GetPos().y > 1 + auto_remain_beats[0].y_offset)) && isAutoPlay){
+                Player.moveDown();
             }
 
             // 设置跨越速度
             if(detect_list.Contains(auto_remain_beats[1].type)){
-                Player.GetComponent<Player>().setCrossTime(auto_remain_beats[1].beat_time - auto_remain_beats[0].beat_time);
+                Player.setCrossTime(auto_remain_beats[1].beat_time - auto_remain_beats[0].beat_time);
             }
 
             auto_remain_beats.RemoveAt(0);

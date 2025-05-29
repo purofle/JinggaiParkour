@@ -9,7 +9,13 @@ public class MusicCamera : MonoBehaviour
     private bool toShake = false;
     private const float CROSS_TIME = 1f;
     private const float SHAKE_TIME = 0.5f;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+    private bool toRotate = false;
+    private float ori_rotateAngle = 0;
+    private float rotateAngle = 0;
+    private float ROTATE_CROSS_TIME = 1f;
+    private float rotate_timer = 1f;
+
     void Start()
     {
         offset = transform.position - center.transform.position;
@@ -19,7 +25,7 @@ public class MusicCamera : MonoBehaviour
     void LateUpdate()
     {
         transform.position = center.transform.position + offset;
-        shakeCamera();
+        moveCamera();
     }
 
     public void triggerShake()
@@ -29,7 +35,14 @@ public class MusicCamera : MonoBehaviour
         }
     }
 
-    void shakeCamera()
+    public void triggerRotate(float angle, float time = 1f)
+    {
+        rotateAngle = angle;
+        ROTATE_CROSS_TIME = time;
+        toRotate = true;
+    }
+
+    void moveCamera()
     {
         if (toShake)
         {
@@ -38,9 +51,24 @@ public class MusicCamera : MonoBehaviour
         }
         if (shake_timer < SHAKE_TIME)
         {
-            transform.position += new Vector3(UnityEngine.Random.Range(shake_timer / SHAKE_TIME - 1, 1 - shake_timer / SHAKE_TIME ), UnityEngine.Random.Range(shake_timer / SHAKE_TIME - 1, 1 - shake_timer / SHAKE_TIME));
+            transform.position += new Vector3(UnityEngine.Random.Range(shake_timer / SHAKE_TIME - 1, 1 - shake_timer / SHAKE_TIME), UnityEngine.Random.Range(shake_timer / SHAKE_TIME - 1, 1 - shake_timer / SHAKE_TIME));
         }
         shake_timer += Time.deltaTime;
+
+        if (toRotate)
+        {
+            ori_rotateAngle = transform.rotation.eulerAngles.z;
+            rotate_timer = 0f;
+            toRotate = false;
+        }
+        if (rotate_timer < ROTATE_CROSS_TIME)
+        {
+            Vector3 ori = transform.rotation.eulerAngles;
+            double progress = 1 - Math.Pow(1 - rotate_timer / ROTATE_CROSS_TIME, 4);
+            ori.z = (float)(progress * rotateAngle + (1 - progress) * ori_rotateAngle);
+            transform.rotation = Quaternion.Euler(ori); ;
+        }
+        rotate_timer += Time.deltaTime;
     }
 
     Vector3 CalcOffsetByTimer()
