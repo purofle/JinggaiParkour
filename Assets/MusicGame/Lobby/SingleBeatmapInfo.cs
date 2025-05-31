@@ -18,6 +18,8 @@ public class SingleBeatmapInfo : MonoBehaviour
     public TMP_Text title_object;
     public TMP_Text descrip_object;
     public TMP_Text level_object;
+    public Image leftBackImage;
+    public Image rightBackImage;
     public Image backImage;
     public Image Rating;
     public Image levelImage;
@@ -34,12 +36,43 @@ public class SingleBeatmapInfo : MonoBehaviour
         dataFolder = $"{Application.persistentDataPath}/music";
     }
 
-    public void SetBackground(Texture2D texture) {
-        backImage.sprite = Sprite.Create(texture,
-            new Rect(0, 0, texture.width, texture.height),
-            new Vector2(0.5f, 0.5f)
-        );
-        backImage.GetComponent<AspectRatioFitter>().aspectRatio = (float)texture.width / texture.height;
+    public enum Margin_Type {
+        MIDDLE,
+        LEFT,
+        RIGHT
+    }
+
+    public void SetBackground(Texture2D texture, float alpha = (float)185 / 255, Margin_Type margin_Type = Margin_Type.MIDDLE) {
+        if (margin_Type == Margin_Type.MIDDLE)
+        {
+            backImage.sprite = Sprite.Create(texture,
+                new Rect(0, 0, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f)
+            );
+            Color new_color = backImage.color;
+            new_color.a = alpha;
+            backImage.color = new_color;
+            backImage.GetComponent<AspectRatioFitter>().aspectRatio = (float)texture.width / texture.height;
+        }
+        else
+        {
+            backImage.gameObject.SetActive(false);
+            Image image = margin_Type switch
+            {
+                Margin_Type.LEFT => leftBackImage,
+                Margin_Type.RIGHT => rightBackImage,
+                _ => leftBackImage,
+            };
+            ;
+            image.gameObject.SetActive(true);
+            Color new_color = image.color;
+            new_color.a = alpha;
+            image.color = new_color;
+            image.sprite = Sprite.Create(texture,
+                new Rect(0, 0, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f)
+            );
+        }
     }
     void GetReady(string path){
         BeatmapInfo.beatmap_name = path;
@@ -54,7 +87,9 @@ public class SingleBeatmapInfo : MonoBehaviour
     {
         beatmapInfo = beatmapInfos[diff_index];
 
+        gameObject.GetComponent<Button>().onClick.RemoveAllListeners();
         gameObject.GetComponent<Button>().onClick.AddListener(() => GetReady(beatmapInfo.path));
+        deleteButton.GetComponent<Button>().onClick.RemoveAllListeners();
         deleteButton.GetComponent<Button>().onClick.AddListener(() => DeleteMap(beatmapInfo.path));
         title_object.text = beatmapInfo.title;
         descrip_object.text = $"曲师：{beatmapInfo.author}\n谱师：{beatmapInfo.mapper}";

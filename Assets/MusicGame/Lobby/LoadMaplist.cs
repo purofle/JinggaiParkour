@@ -90,7 +90,25 @@ public class LoadMaplist : MonoBehaviour
             item.GetComponent<SingleBeatmapInfo>().beatmapInfos = infos;
             item.GetComponent<SingleBeatmapInfo>().diff_index = 0;
             item.GetComponent<SingleBeatmapInfo>().LoadBeatmapInfo();
-            if(File.Exists($"{dataFolder}/{info.path}/bg.png")){
+            if(File.Exists($"{dataFolder}/{info.path}/special_bar.png")){
+                byte[] fileData = File.ReadAllBytes($"{dataFolder}/{info.path}/special_bar.png");
+                Texture2D texture = new Texture2D(2, 2);
+                texture.LoadImage(fileData);
+                item.GetComponent<SingleBeatmapInfo>().SetBackground(texture, 1);
+            } else if (File.Exists($"{dataFolder}/{info.path}/left_special_bar.png"))
+            {
+                byte[] fileData = File.ReadAllBytes($"{dataFolder}/{info.path}/left_special_bar.png");
+                Texture2D texture = new Texture2D(2, 2);
+                texture.LoadImage(fileData);
+                item.GetComponent<SingleBeatmapInfo>().SetBackground(texture, 1, SingleBeatmapInfo.Margin_Type.LEFT);
+            } else if (File.Exists($"{dataFolder}/{info.path}/right_special_bar.png"))
+            {
+                byte[] fileData = File.ReadAllBytes($"{dataFolder}/{info.path}/right_special_bar.png");
+                Texture2D texture = new Texture2D(2, 2);
+                texture.LoadImage(fileData);
+                item.GetComponent<SingleBeatmapInfo>().SetBackground(texture, 1, SingleBeatmapInfo.Margin_Type.RIGHT);
+            } else if (File.Exists($"{dataFolder}/{info.path}/bg.png"))
+            {
                 byte[] fileData = File.ReadAllBytes($"{dataFolder}/{info.path}/bg.png");
                 Texture2D texture = new Texture2D(2, 2);
                 texture.LoadImage(fileData);

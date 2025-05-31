@@ -6,6 +6,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using TMPro;
 using Unity.Entities.UniversalDelegates;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -88,8 +89,7 @@ public class BeatmapManager : MonoBehaviour
     List<float> should_change_bpm = new();
     List<float> should_change_bpm_time = new();
     List<float> should_change_hidden_time = new();
-    List<float> should_change_camera_angle = new();
-    List<float> should_change_camera_cross_time = new();
+    List<CameraData> should_change_camera_data = new();
     List<float> should_change_camera_time = new();
     float autoShift = 0.0f;
 
@@ -105,6 +105,36 @@ public class BeatmapManager : MonoBehaviour
         CAMERA_TYPE,
         FINISH,
     }
+
+    public class CameraData
+    {
+        public float cross_time = 0;
+        public float z_angle = 0;
+        public int ease_type = 1;
+
+        public static CameraData operator *(double a, CameraData b)
+        {
+            CameraData r = new()
+            {
+                cross_time = b.cross_time,
+                z_angle = (float)(b.z_angle * a),
+                ease_type = b.ease_type
+            };
+            return r;
+        }
+
+        public static CameraData operator +(CameraData a, CameraData b)
+        {
+            CameraData r = new()
+            {
+                cross_time = Math.Max(a.cross_time, b.cross_time),
+                z_angle = a.z_angle + b.z_angle,
+                ease_type = b.ease_type
+            };
+            return r;
+        }
+    }
+
     struct SingleBeat
     {
         public B_TYPE type;
@@ -115,8 +145,7 @@ public class BeatmapManager : MonoBehaviour
         public float size;
         public float y_offset;
         public float BPM;
-        public float angle;
-        public float cross_time;
+        public CameraData camera_data;
     }
 
     private List<SingleBeat> remain_beats = new();
@@ -312,15 +341,19 @@ public class BeatmapManager : MonoBehaviour
             {
                 float slice_beat = getValue(data[3]) > 0 ? getValue(data[2]) / getValue(data[3]) : 0;
                 float beat_time = last_time + (getValue(data[1]) + slice_beat) * (60 / BPM) + offset;
-                float angle = getValue(data[5], 360);
-                float cross_time = getValue(data[4], 0.5f) * (60 / BPM);
+                float camera_cross_slice_beat = getValue(data[7]) > 0 ? getValue(data[6]) / getValue(data[7]) : 0;
+                CameraData cameraData = new()
+                {
+                    cross_time = (getValue(data[5], 0.5f) + camera_cross_slice_beat) * (60 / BPM),
+                    z_angle = getValue(data[8], 0),
+                    ease_type = getIntValue(data[4], 1)
+                };
                 storage_beats.Add(
                     new SingleBeat()
                     {
                         type = B_TYPE.CAMERA_TYPE,
                         beat_time = beat_time,
-                        angle = angle,
-                        cross_time = cross_time
+                        camera_data = cameraData
                     }
                 );
                 continue;
@@ -445,6 +478,7 @@ public class BeatmapManager : MonoBehaviour
 
     public void ReloadFromTime(float start_time)
     {
+        start_time = Math.Min(MusicPlayer.clip.length, Math.Abs(start_time));
         OnPlayingTime = start_time;
         Player.ChangePos();
         landGenerator.RespawnLand();
@@ -456,6 +490,7 @@ public class BeatmapManager : MonoBehaviour
         PracticingImage.SetActive(true);
         GetIntoButton.SetActive(false);
         PracticingObject.SetActive(true);
+        PracticingObject.GetComponent<PracticingBar>().SetFirstValue();
         isPractcing = true;
         MusicPlayer.Pause();
         Time.timeScale = 0;
@@ -612,8 +647,7 @@ public class BeatmapManager : MonoBehaviour
         if(auto_remain_beats[0].type == B_TYPE.CAMERA_TYPE){
             ready_to_change_camera = true;
             should_change_camera_time.Add(auto_remain_beats[0].beat_time);
-            should_change_camera_angle.Add(auto_remain_beats[0].angle);
-            should_change_camera_cross_time.Add(auto_remain_beats[0].cross_time);
+            should_change_camera_data.Add(auto_remain_beats[0].camera_data);
             auto_remain_beats.RemoveAt(0);
         }
         if (ready_to_change_bpm)
@@ -643,10 +677,9 @@ public class BeatmapManager : MonoBehaviour
         {
             if (OnPlayingTime - BeforeTime >= should_change_camera_time[0])
             {
-                camera.triggerRotate(should_change_camera_angle[0], should_change_camera_cross_time[0]);
+                camera.triggerTransform(should_change_camera_data[0]);
                 should_change_camera_time.RemoveAt(0);
-                should_change_camera_angle.RemoveAt(0);
-                should_change_camera_cross_time.RemoveAt(0);
+                should_change_camera_data.RemoveAt(0);
                 if(should_change_camera_time.Count <= 0){
                     ready_to_change_camera = false;
                 }

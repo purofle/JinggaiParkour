@@ -8,6 +8,7 @@ public class CommandSet : MonoBehaviour
     }
 
     public void Exit(){
+        Time.timeScale = 1;
         SceneManager.LoadScene("MusicLobby");
     }
 

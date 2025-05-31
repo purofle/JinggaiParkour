@@ -14,35 +14,50 @@ public class DisplayPanel : MonoBehaviour
     public GameObject recordItemFather;
     public Image levelImage;
     public Sprite[] LevelPresents;
+    public GameObject AdbarList;
+    public GameObject AdbarTemplate;
 
-    public void LoadPanel(){
+    public void LoadPanel()
+    {
         string beat_path = $"{Application.persistentDataPath}/music/{BeatmapInfo.beatmap_name}/data.sdz";
         string author = "";
         string mapper = "";
-        foreach ( string line in File.ReadAllText(beat_path).Split("\n")){
+        foreach (string line in File.ReadAllText(beat_path).Split("\n"))
+        {
             string[] data = line.Split("=");
-            if(data[0].Trim() == "title"){
+            if (data[0].Trim() == "title")
+            {
                 title.text = data[1].Trim();
                 continue;
             }
-            if(data[0].Trim() == "author"){
+            if (data[0].Trim() == "author")
+            {
                 author = data[1].Trim();
                 continue;
             }
-            if(data[0].Trim() == "mapper"){
+            if (data[0].Trim() == "mapper")
+            {
                 mapper = data[1].Trim();
                 continue;
             }
-            if(data[0].Trim() == "level"){
+            if (data[0].Trim() == "level")
+            {
                 Level.text = data[1].Trim();
                 float level = float.Parse(data[1].Trim());
-                if(level < 6){
+                if (level < 6)
+                {
                     levelImage.sprite = LevelPresents[3];
-                } else if (level < 10){
+                }
+                else if (level < 10)
+                {
                     levelImage.sprite = LevelPresents[2];
-                } else if (level < 13){
+                }
+                else if (level < 13)
+                {
                     levelImage.sprite = LevelPresents[1];
-                } else {
+                }
+                else
+                {
                     levelImage.sprite = LevelPresents[0];
                 }
                 continue;
@@ -51,16 +66,51 @@ public class DisplayPanel : MonoBehaviour
         description.text = $"曲师：{author}\n谱师：{mapper}";
 
         string record_path = $"{Application.persistentDataPath}/record/{BeatmapInfo.beatmap_name}.dat";
-        for(int j = 0;j < recordItemFather.transform.childCount;j++){
+        for (int j = 0; j < recordItemFather.transform.childCount; j++)
+        {
             Destroy(recordItemFather.transform.GetChild(0).gameObject);
         }
-        if(File.Exists(record_path)){
+        if (File.Exists(record_path))
+        {
             var data_list = JsonConvert.DeserializeObject<List<BeatmapManager.BeatmapResult>>(File.ReadAllText(record_path));
-            foreach(BeatmapManager.BeatmapResult result in data_list){
-                GameObject newItem = Instantiate(recordItem,recordItemFather.transform);
+            foreach (BeatmapManager.BeatmapResult result in data_list)
+            {
+                GameObject newItem = Instantiate(recordItem, recordItemFather.transform);
                 newItem.SetActive(true);
                 newItem.GetComponent<RecordItem>().beatmapResult = result;
             }
         }
+
+        string ad_data_path = $"{Application.persistentDataPath}/music/{BeatmapInfo.beatmap_name}/ad.dat";
+
+        if (File.Exists(ad_data_path))
+        {
+            for (int i = 0; i < AdbarList.transform.childCount; i++)
+            {
+                Destroy(AdbarList.transform.GetChild(0).gameObject);
+            }
+            AdbarList.SetActive(true);
+            List<AdInfo> ad_list = JsonConvert.DeserializeObject<List<AdInfo>>(File.ReadAllText(ad_data_path));
+            for (int i = 0; i < ad_list.Count; i++)
+            {
+                AdInfo adInfo = ad_list[i];
+                GameObject adbar = Instantiate(AdbarTemplate, AdbarList.transform);
+                adbar.GetComponent<Adbar>().targetURL = adInfo.targetURL;
+                adbar.GetComponent<Adbar>().additionalText = adInfo.additionalText;
+                adbar.GetComponent<Adbar>().imagePath = $"{Application.persistentDataPath}/music/{BeatmapInfo.beatmap_name}/" + adInfo.imagePath;
+                adbar.SetActive(true);
+            }
+        }
+        else
+        {
+            AdbarList.SetActive(false);
+        }
+    }
+
+    struct AdInfo
+    {
+        public string imagePath;
+        public string additionalText;
+        public string targetURL;
     }
 }

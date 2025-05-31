@@ -11,6 +11,15 @@ public class PracticingBar : MonoBehaviour
     public Sprite[] pauseAndStartImage;
     public Button pauseButton;
     bool playing = false;
+    bool firstTime = true;
+    public void SetFirstValue()
+    {
+        if (firstTime)
+        {
+            inputField.text = beatmapManager.GetPlayingTime().ToString();
+            firstTime = false;
+        }
+    }
 
     public void Reload()
     {

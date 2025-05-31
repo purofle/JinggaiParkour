@@ -1,5 +1,8 @@
 using UnityEngine;
 using System;
+using static BeatmapManager;
+using Unity.VisualScripting.Antlr3.Runtime;
+using DG.Tweening;
 public class MusicCamera : MonoBehaviour
 {
     public GameObject center;
@@ -10,11 +13,11 @@ public class MusicCamera : MonoBehaviour
     private const float CROSS_TIME = 1f;
     private const float SHAKE_TIME = 0.5f;
 
-    private bool toRotate = false;
-    private float ori_rotateAngle = 0;
-    private float rotateAngle = 0;
-    private float ROTATE_CROSS_TIME = 1f;
-    private float rotate_timer = 1f;
+    private bool toTrans = false;
+    private CameraData ori_cameraData;
+    private CameraData now_cameraData = new();
+    private float trans_cross_time = 1f;
+    private float trans_timer = 1f;
 
     void Start()
     {
@@ -35,13 +38,22 @@ public class MusicCamera : MonoBehaviour
         }
     }
 
-    public void triggerRotate(float angle, float time = 1f)
+    public void triggerTransform(CameraData from_cameraData)
     {
-        rotateAngle = angle;
-        ROTATE_CROSS_TIME = time;
-        toRotate = true;
+        ori_cameraData = now_cameraData;
+        now_cameraData = from_cameraData;
+        trans_cross_time = from_cameraData.cross_time;
+        toTrans = true;
     }
 
+    float CalcProgress(float timer, float cross_time, int type = 1)
+    {
+        if (type >= (int)Ease.INTERNAL_Zero || type <= (int)Ease.Unset)
+        {
+            type = 1;
+        }
+        return DOVirtual.EasedValue(0, 1, timer / cross_time, (Ease)type);
+    }
     void moveCamera()
     {
         if (toShake)
@@ -55,20 +67,23 @@ public class MusicCamera : MonoBehaviour
         }
         shake_timer += Time.deltaTime;
 
-        if (toRotate)
+        if (toTrans)
         {
-            ori_rotateAngle = transform.rotation.eulerAngles.z;
-            rotate_timer = 0f;
-            toRotate = false;
+            trans_timer = 0f;
+            toTrans = false;
         }
-        if (rotate_timer < ROTATE_CROSS_TIME)
+        if (trans_timer < trans_cross_time)
         {
             Vector3 ori = transform.rotation.eulerAngles;
-            double progress = 1 - Math.Pow(1 - rotate_timer / ROTATE_CROSS_TIME, 4);
-            ori.z = (float)(progress * rotateAngle + (1 - progress) * ori_rotateAngle);
+
+            float progress = CalcProgress(trans_timer, trans_cross_time, now_cameraData.ease_type);
+            CameraData new_transdata = progress * now_cameraData + (1 - progress) * ori_cameraData;
+
+            ori.z = new_transdata.z_angle;
+
             transform.rotation = Quaternion.Euler(ori); ;
         }
-        rotate_timer += Time.deltaTime;
+        trans_timer += Time.deltaTime;
     }
 
     Vector3 CalcOffsetByTimer()
