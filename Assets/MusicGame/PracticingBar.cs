@@ -16,7 +16,7 @@ public class PracticingBar : MonoBehaviour
     {
         if (firstTime)
         {
-            inputField.text = beatmapManager.GetPlayingTime().ToString();
+            inputField.text = beatmapManager.GetRealPlayingTime().ToString();
             firstTime = false;
         }
     }

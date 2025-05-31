@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 public class CommandSet : MonoBehaviour
 {
     public void Retry(){
+        Time.timeScale = 1;
         SceneManager.LoadScene("MusicGame");
     }
 
