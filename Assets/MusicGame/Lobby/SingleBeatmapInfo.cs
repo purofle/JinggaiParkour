@@ -24,6 +24,7 @@ public class SingleBeatmapInfo : MonoBehaviour
     public Image Rating;
     public Image levelImage;
     public GameObject deleteButton;
+    public GameObject deleteAllButton;
 
     public GameObject diffUpButton;
     public GameObject diffDownButton;
@@ -79,10 +80,23 @@ public class SingleBeatmapInfo : MonoBehaviour
         LoadMaplist.OpenDisplayPanel();
     }
 
-    void DeleteMap(string path){
+    void DeleteMap(string path, bool reload = true){
         FileBrowserHelpers.DeleteDirectory($"{dataFolder}/{path}");
+        if (reload)
+        {
+            SceneManager.LoadScene("MusicLobby");
+        }
+    }
+
+    void DeleteMapWithAllLevels()
+    {
+        foreach (AnBeatmapInfo temp_beatmapInfo in beatmapInfos)
+        {
+            DeleteMap(temp_beatmapInfo.path, false);
+        }
         SceneManager.LoadScene("MusicLobby");
     }
+
     public void LoadBeatmapInfo()
     {
         beatmapInfo = beatmapInfos[diff_index];
@@ -91,31 +105,46 @@ public class SingleBeatmapInfo : MonoBehaviour
         gameObject.GetComponent<Button>().onClick.AddListener(() => GetReady(beatmapInfo.path));
         deleteButton.GetComponent<Button>().onClick.RemoveAllListeners();
         deleteButton.GetComponent<Button>().onClick.AddListener(() => DeleteMap(beatmapInfo.path));
+        deleteAllButton.GetComponent<Button>().onClick.RemoveAllListeners();
+        deleteAllButton.GetComponent<Button>().onClick.AddListener(() => DeleteMapWithAllLevels());
+
         title_object.text = beatmapInfo.title;
         descrip_object.text = $"曲师：{beatmapInfo.author}\n谱师：{beatmapInfo.mapper}";
 
         int max_rating = 100;
-        if(File.Exists($"{Application.persistentDataPath}/record/{beatmapInfo.path}.dat")){
+        if (File.Exists($"{Application.persistentDataPath}/record/{beatmapInfo.path}.dat"))
+        {
             var data_list = JsonConvert.DeserializeObject<List<BeatmapManager.BeatmapResult>>(File.ReadAllText($"{Application.persistentDataPath}/record/{beatmapInfo.path}.dat"));
-            foreach(BeatmapManager.BeatmapResult result in data_list){
-                max_rating = Math.Min(max_rating,result.rating);
+            foreach (BeatmapManager.BeatmapResult result in data_list)
+            {
+                max_rating = Math.Min(max_rating, result.rating);
             }
         }
-        if(max_rating < 15){
+        if (max_rating < 15)
+        {
             Rating.sprite = Presents[max_rating];
-        } else {
+        }
+        else
+        {
             Rating.sprite = null;
-            Rating.color = new Color(0,0,0,0);
+            Rating.color = new Color(0, 0, 0, 0);
         }
         level_object.text = beatmapInfo.level.ToString();
         // 评级
-        if(beatmapInfo.level < 6){
+        if (beatmapInfo.level < 6)
+        {
             levelImage.sprite = LevelPresents[3];
-        } else if (beatmapInfo.level < 10){
+        }
+        else if (beatmapInfo.level < 10)
+        {
             levelImage.sprite = LevelPresents[2];
-        } else if (beatmapInfo.level < 13){
+        }
+        else if (beatmapInfo.level < 13)
+        {
             levelImage.sprite = LevelPresents[1];
-        } else {
+        }
+        else
+        {
             levelImage.sprite = LevelPresents[0];
         }
     }
@@ -128,16 +157,23 @@ public class SingleBeatmapInfo : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(diff_index <= 0){
+        if (diff_index <= 0)
+        {
             diffDownButton.SetActive(false);
-        } else {
+        }
+        else
+        {
             diffDownButton.SetActive(true);
         }
-        if(diff_index >= beatmapInfos.Count - 1){
+        if (diff_index >= beatmapInfos.Count - 1)
+        {
             diffUpButton.SetActive(false);
-        } else {
+        }
+        else
+        {
             diffUpButton.SetActive(true);
         }
         deleteButton.SetActive(LoadMaplist.IsDeleting());
+        deleteAllButton.SetActive(LoadMaplist.IsDeleting());
     }
 }
