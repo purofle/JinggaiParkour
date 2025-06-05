@@ -42,25 +42,16 @@ public class DisplayPanel : MonoBehaviour
             }
             if (data[0].Trim() == "level")
             {
+                Level.text = ((int)(float.Parse(data[1].Trim()) / 15 * 100000)).ToString();
+            }
+            if (data[0].Trim() == "mass")
+            {
                 Level.text = data[1].Trim();
-                float level = float.Parse(data[1].Trim());
-                if (level < 6)
-                {
-                    levelImage.sprite = LevelPresents[3];
-                }
-                else if (level < 10)
-                {
-                    levelImage.sprite = LevelPresents[2];
-                }
-                else if (level < 13)
-                {
-                    levelImage.sprite = LevelPresents[1];
-                }
-                else
-                {
-                    levelImage.sprite = LevelPresents[0];
-                }
                 continue;
+            }
+            if (data[0].Trim() == "difficulty")
+            {
+                levelImage.sprite = LevelPresents[(int)BeatmapManager.GetDifficulty(data[1].Trim())];
             }
         }
         description.text = $"曲师：{author}\n谱师：{mapper}";

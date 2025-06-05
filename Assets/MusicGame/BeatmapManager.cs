@@ -12,6 +12,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using UnityEngine.Video;
+using static LevelDisplayer;
 
 public class BeatmapManager : MonoBehaviour
 {
@@ -176,6 +177,26 @@ public class BeatmapManager : MonoBehaviour
         return float.Parse(value);
     }
 
+    public static Difficulty GetDifficulty(string difficulty_string)
+    {
+        return difficulty_string[0] switch
+        {
+            'S' => Difficulty.SO_POWERFUL,
+            's' => Difficulty.SO_POWERFUL,
+            'P' => Difficulty.POWERFUL,
+            'p' => Difficulty.POWERFUL,
+            'H' => Difficulty.HARD,
+            'h' => Difficulty.HARD,
+            'N' => Difficulty.NORMAL,
+            'n' => Difficulty.NORMAL,
+            'E' => Difficulty.EASY,
+            'e' => Difficulty.EASY,
+            'F' => Difficulty.FUN,
+            'f' => Difficulty.FUN,
+            _ => Difficulty.NONE,
+        };
+    }
+
     int getIntValue(string value, int default_value = 0)
     {
         string trimed = value.Trim();
@@ -268,7 +289,17 @@ public class BeatmapManager : MonoBehaviour
             }
             if (data[0].Trim() == "level")
             {
-                levelDisplayer.level = getValue(data[1]);
+                levelDisplayer.level = (int)(getValue(data[1]) / 15 * 100000);
+                continue;
+            }
+            if (data[0].Trim() == "mass")
+            {
+                levelDisplayer.level = getIntValue(data[1]);
+                continue;
+            }
+            if (data[0].Trim() == "difficulty")
+            {
+                levelDisplayer.difficulty = GetDifficulty(data[1].Trim());
                 continue;
             }
 

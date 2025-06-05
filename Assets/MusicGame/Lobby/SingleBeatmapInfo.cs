@@ -131,22 +131,7 @@ public class SingleBeatmapInfo : MonoBehaviour
         }
         level_object.text = beatmapInfo.level.ToString();
         // 评级
-        if (beatmapInfo.level < 6)
-        {
-            levelImage.sprite = LevelPresents[3];
-        }
-        else if (beatmapInfo.level < 10)
-        {
-            levelImage.sprite = LevelPresents[2];
-        }
-        else if (beatmapInfo.level < 13)
-        {
-            levelImage.sprite = LevelPresents[1];
-        }
-        else
-        {
-            levelImage.sprite = LevelPresents[0];
-        }
+        levelImage.sprite = LevelPresents[(int)beatmapInfo.difficulty];
     }
 
     public void SwitchDiff(int delta){

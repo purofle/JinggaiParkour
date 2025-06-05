@@ -5427,10 +5427,13 @@ MonoBehaviour:
   - {fileID: 1971153542, guid: d7379d0585842e04a896ed826699dd48, type: 3}
   - {fileID: -28151682, guid: d7379d0585842e04a896ed826699dd48, type: 3}
   LevelPresents:
-  - {fileID: 764095953, guid: a685f4b1042415647aa61188fdd81e2f, type: 3}
-  - {fileID: 1949298510, guid: a685f4b1042415647aa61188fdd81e2f, type: 3}
-  - {fileID: -1690066695, guid: a685f4b1042415647aa61188fdd81e2f, type: 3}
-  - {fileID: -1056348967, guid: a685f4b1042415647aa61188fdd81e2f, type: 3}
+  - {fileID: 21300000, guid: 26241f7b1663b8f49a6e70cf6dadf6d6, type: 3}
+  - {fileID: -1711428916, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: 747197758, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: 425854571, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: -768107204, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: -753623440, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: -1143541607, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
   title_object: {fileID: 379802895}
   descrip_object: {fileID: 109926870}
   level_object: {fileID: 2100184439}
@@ -6939,10 +6942,13 @@ MonoBehaviour:
   recordItemFather: {fileID: 841043201}
   levelImage: {fileID: 564219248}
   LevelPresents:
-  - {fileID: 764095953, guid: a685f4b1042415647aa61188fdd81e2f, type: 3}
-  - {fileID: 1949298510, guid: a685f4b1042415647aa61188fdd81e2f, type: 3}
-  - {fileID: -1690066695, guid: a685f4b1042415647aa61188fdd81e2f, type: 3}
-  - {fileID: -1056348967, guid: a685f4b1042415647aa61188fdd81e2f, type: 3}
+  - {fileID: 21300000, guid: 26241f7b1663b8f49a6e70cf6dadf6d6, type: 3}
+  - {fileID: -1711428916, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: 747197758, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: 425854571, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: -768107204, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: -753623440, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
+  - {fileID: -1143541607, guid: 4cc6cfbba48475c41ae0156aaefde1e5, type: 3}
   AdbarList: {fileID: 29437165}
   AdbarTemplate: {fileID: 1303281975}
 --- !u!1 &2056691011

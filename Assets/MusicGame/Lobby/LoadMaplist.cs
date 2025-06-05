@@ -6,16 +6,19 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using static LevelDisplayer;
 
 public class LoadMaplist : MonoBehaviour
 {
-    public struct AnBeatmapInfo {
+    public struct AnBeatmapInfo
+    {
         public string path;
         public string title;
         public string author;
         public string mapper;
         public float BPM;
-        public float level;
+        public int level;
+        public Difficulty difficulty;
     }
 
     private string dataFolder;
@@ -44,28 +47,46 @@ public class LoadMaplist : MonoBehaviour
             string beat_path = $"{path}/data.sdz";
             AnBeatmapInfo info = new()
             {
-                path = folderName
+                path = folderName,
+                level = 0,
+                difficulty = Difficulty.NONE
             };
-            foreach ( string line in File.ReadAllText(beat_path).Split("\n")){
+            foreach (string line in File.ReadAllText(beat_path).Split("\n"))
+            {
                 string[] data = line.Split("=");
-                if(data[0].Trim() == "title"){
+                if (data[0].Trim() == "title")
+                {
                     info.title = data[1].Trim();
                     continue;
                 }
-                if(data[0].Trim() == "bpm"){
+                if (data[0].Trim() == "bpm")
+                {
                     info.BPM = float.Parse(data[1].Trim());
                     continue;
                 }
-                if(data[0].Trim() == "author"){
+                if (data[0].Trim() == "author")
+                {
                     info.author = data[1].Trim();
                     continue;
                 }
-                if(data[0].Trim() == "mapper"){
+                if (data[0].Trim() == "mapper")
+                {
                     info.mapper = data[1].Trim();
                     continue;
                 }
-                if(data[0].Trim() == "level"){
-                    info.level = float.Parse(data[1].Trim());
+                if (data[0].Trim() == "level")
+                {
+                    info.level = (int)(float.Parse(data[1].Trim()) / 15 * 100000);
+                    continue;
+                }
+                if (data[0].Trim() == "mass")
+                {
+                    info.level = int.Parse(data[1].Trim());
+                    continue;
+                }
+                if (data[0].Trim() == "difficulty")
+                {
+                    info.difficulty = BeatmapManager.GetDifficulty(data[1].Trim());
                     continue;
                 }
             }
