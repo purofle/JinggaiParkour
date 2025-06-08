@@ -26,6 +26,7 @@ public class LoadMaplist : MonoBehaviour
 
     public GameObject SingleItem;
     public GameObject MapList;
+    public GameObject EmptyInfo;
     public GameObject t_DisplayPanel;
     public static GameObject DisplayPanel;
 
@@ -137,8 +138,10 @@ public class LoadMaplist : MonoBehaviour
             }
         }
         // 无谱面则隐藏
-        if(!init){
+        if (!init)
+        {
             SingleItem.SetActive(false);
+            EmptyInfo.SetActive(true);
         }
     }
 

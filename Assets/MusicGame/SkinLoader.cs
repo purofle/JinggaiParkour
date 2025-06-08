@@ -17,7 +17,7 @@ public class SkinLoader : MonoBehaviour
 
     string dataFolder;
 
-    void Start()
+    void Awake()
     {
         dataFolder = $"{Application.persistentDataPath}/skin";
 
@@ -140,11 +140,5 @@ public class SkinLoader : MonoBehaviour
             AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
             SoundManager.best_sound = clip;
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

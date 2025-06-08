@@ -5,6 +5,7 @@ using System.Linq;
 using SimpleFileBrowser;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static LevelDisplayer;
 
 public class FileBrowserSet : MonoBehaviour
 {
@@ -33,7 +34,7 @@ public class FileBrowserSet : MonoBehaviour
 		}
 	}
 
-	void LoadSingleMap(string file_dir)
+	public static void LoadSingleMap(string file_dir)
 	{
 		string dataFolder = $"{Application.persistentDataPath}/music";
 		string tempPath = $"{dataFolder}/temp";
@@ -52,17 +53,46 @@ public class FileBrowserSet : MonoBehaviour
 			return;
 		}
 		string title = Random.Range(10000,99999).ToString();
-		float level = 0;
-		foreach( string line in File.ReadAllText(path).Split("\n")){
+		Difficulty difficulty = Difficulty.NONE;
+		int level = 0;
+		foreach (string line in File.ReadAllText(path).Split("\n"))
+		{
 			string[] data = line.Split("=");
-			if(data[0].Trim() == "title"){
+			if (data[0].Trim() == "title")
+			{
 				title = data[1].Trim();
 			}
-			if(data[0].Trim() == "level"){
-				level = float.Parse(data[1].Trim());
+			if (data[0].Trim() == "difficulty")
+			{
+				difficulty = BeatmapManager.GetDifficulty(data[1].Trim());
+			}
+			if (data[0].Trim() == "level")
+			{
+				level = (int)(float.Parse(data[1].Trim()) / 15 * 100000);
+			}
+			if (data[0].Trim() == "mass")
+			{
+				level = int.Parse(data[1].Trim());
 			}
 		}
-		title += "_" + level.ToString();
+		switch (difficulty)
+		{
+			case Difficulty.FUN:
+				{
+					title += "_" + difficulty.ToString() + "_" + level.ToString();
+					break;
+				}
+			case Difficulty.NONE:
+				{
+					title += "_" + difficulty.ToString() + "_" + level.ToString();
+					break;
+				}
+			default:
+				{
+					title += "_" + difficulty.ToString();
+					break;
+				}
+		}
 		char[] invalidChars = Path.GetInvalidPathChars();
 		foreach (char c in invalidChars)
 		{
@@ -76,7 +106,7 @@ public class FileBrowserSet : MonoBehaviour
 		Directory.Move(tempPath, dest_path);
 	}
 
-	void LoadMapPacks(string file_dir)
+	public static void LoadMapPacks(string file_dir)
 	{
 		string dataFolder = $"{Application.persistentDataPath}/music";
 		string tempPath = $"{dataFolder}/packtemp";

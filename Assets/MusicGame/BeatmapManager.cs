@@ -114,6 +114,11 @@ public class BeatmapManager : MonoBehaviour
     {
         public float cross_time = 0;
         public float z_angle = 0;
+        public float y_angle = 0;
+        public float x_angle = 0;
+        public float z_pos = 0;
+        public float y_pos = 0;
+        public float x_pos = 0;
         public int ease_type = 1;
 
         public static CameraData operator *(double a, CameraData b)
@@ -122,6 +127,11 @@ public class BeatmapManager : MonoBehaviour
             {
                 cross_time = b.cross_time,
                 z_angle = (float)(b.z_angle * a),
+                y_angle = (float)(b.y_angle * a),
+                x_angle = (float)(b.x_angle * a),
+                z_pos =   (float)(b.z_pos * a),
+                y_pos =   (float)(b.y_pos * a),
+                x_pos =   (float)(b.x_pos * a),
                 ease_type = b.ease_type
             };
             return r;
@@ -133,6 +143,11 @@ public class BeatmapManager : MonoBehaviour
             {
                 cross_time = Math.Max(a.cross_time, b.cross_time),
                 z_angle = a.z_angle + b.z_angle,
+                y_angle = a.y_angle + b.y_angle,
+                x_angle = a.x_angle + b.x_angle,
+                z_pos =   a.z_pos   + b.z_pos  ,
+                y_pos =   a.y_pos   + b.y_pos  ,
+                x_pos =   a.x_pos   + b.x_pos  ,
                 ease_type = b.ease_type
             };
             return r;
@@ -175,6 +190,15 @@ public class BeatmapManager : MonoBehaviour
             return default_value;
         }
         return float.Parse(value);
+    }
+
+    float getValueWithTry(string[] values, int index, float default_value = 0)
+    {
+        if (values.Count() > index)
+        {
+            return getValue(values[index], default_value);
+        }
+        return default_value;
     }
 
     public static Difficulty GetDifficulty(string difficulty_string)
@@ -384,7 +408,12 @@ public class BeatmapManager : MonoBehaviour
                 CameraData cameraData = new()
                 {
                     cross_time = (getValue(data[5], 0.5f) + camera_cross_slice_beat) * (60 / BPM),
-                    z_angle = getValue(data[8], 0),
+                    z_angle = getValueWithTry(data, 8, 0),
+                    y_angle = getValueWithTry(data, 9, 0),
+                    x_angle = getValueWithTry(data, 10, 0),
+                    z_pos = getValueWithTry(data, 11, 0),
+                    y_pos = getValueWithTry(data, 12, 0),
+                    x_pos = getValueWithTry(data, 13, 0),
                     ease_type = getIntValue(data[4], 1)
                 };
                 storage_beats.Add(

@@ -16,17 +16,22 @@ public class DataStorager : MonoBehaviour
   public static KeySettings keysettings;
   public static HistoryRecord historyRecord;
 
-  private void Awake() {
+  private void Awake()
+  {
     DontDestroyOnLoad(gameObject);
     historyRecord = InitHistory();
     settings = InitSettings();
     keysettings = InitKeySettings();
-    coin = InitItem("coin",0);
-    maxLife = InitItem("life",1);
-    if(IsDataed("lastcon")){
+    coin = InitItem("coin", 0);
+    maxLife = InitItem("life", 1);
+    if (IsDataed("lastcon"))
+    {
       coninfo = Load<ConnectionInfo>("lastcon");
-    } else {
-      coninfo = new (){
+    }
+    else
+    {
+      coninfo = new()
+      {
         ip = "",
         port = 7892,
         playerID = ""
@@ -34,21 +39,21 @@ public class DataStorager : MonoBehaviour
     }
 
     // 新手大礼包
-    if(!historyRecord.isOldPlayer){
+    if (!historyRecord.isOldPlayer)
+    {
       // TODO
     }
-    if(!historyRecord.isHaveNewSkin){
+    if (!historyRecord.isHaveNewSkin)
+    {
       GiveNewSkin();
       historyRecord.isHaveNewSkin = true;
     }
+    SaveHistory();
   }
 
   private void GiveNewSkin(){
     if(!Directory.Exists($"{Application.persistentDataPath}/skin")){
       Directory.CreateDirectory($"{Application.persistentDataPath}/skin");
-    }
-    if(Directory.Exists($"{Application.persistentDataPath}/skin/Black and White")){
-      return;
     }
     TextAsset skinObject = Resources.Load<TextAsset>("Skin/default");
     byte[] skinData = skinObject.bytes;
@@ -138,7 +143,7 @@ public class DataStorager : MonoBehaviour
     Save("keysettings", keysettings);
   }
 
-  public static void SaveHisroty(){
+  public static void SaveHistory(){
     Save("historyrecord", historyRecord);
   }
 }

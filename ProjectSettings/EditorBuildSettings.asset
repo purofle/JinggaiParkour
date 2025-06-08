@@ -26,6 +26,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/AllScenes/MusicGame.unity
     guid: 68feda28051d78e4d9e096e93fbcc9d7
+  - enabled: 1
+    path: Assets/AllScenes/DownloadLobby.unity
+    guid: 78dc856fc1353c34895d1514a2df6db1
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 9f9b6491a8acbdf4faaabb46fecd7c20, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

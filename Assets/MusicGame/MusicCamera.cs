@@ -7,6 +7,7 @@ public class MusicCamera : MonoBehaviour
 {
     public GameObject center;
     private Vector3 offset;
+    private Vector3 initRotation;
     private float move_timer = 0f;
     private float shake_timer = 1f;
     private bool toShake = false;
@@ -14,7 +15,7 @@ public class MusicCamera : MonoBehaviour
     private const float SHAKE_TIME = 0.5f;
 
     private bool toTrans = false;
-    private CameraData ori_cameraData;
+    private CameraData ori_cameraData = new();
     private CameraData now_cameraData = new();
     private float trans_cross_time = 1f;
     private float trans_timer = 1f;
@@ -22,6 +23,7 @@ public class MusicCamera : MonoBehaviour
     void Start()
     {
         offset = transform.position - center.transform.position;
+        initRotation = transform.rotation.eulerAngles;
     }
 
     // Update is called once per frame
@@ -67,22 +69,25 @@ public class MusicCamera : MonoBehaviour
         }
         shake_timer += Time.deltaTime;
 
+        // 自定义变换
         if (toTrans)
         {
             trans_timer = 0f;
             toTrans = false;
         }
+        float progress = 1;
         if (trans_timer < trans_cross_time)
         {
-            Vector3 ori = transform.rotation.eulerAngles;
-
-            float progress = CalcProgress(trans_timer, trans_cross_time, now_cameraData.ease_type);
-            CameraData new_transdata = progress * now_cameraData + (1 - progress) * ori_cameraData;
-
-            ori.z = new_transdata.z_angle;
-
-            transform.rotation = Quaternion.Euler(ori); ;
+            progress = CalcProgress(trans_timer, trans_cross_time, now_cameraData.ease_type);
         }
+        Vector3 new_rotation = initRotation;
+        CameraData new_transdata = progress * now_cameraData + (1 - progress) * ori_cameraData;
+        new_rotation.z += new_transdata.z_angle;
+        new_rotation.y += new_transdata.y_angle;
+        new_rotation.x += new_transdata.x_angle;
+        transform.rotation = Quaternion.Euler(new_rotation);
+        transform.position += new Vector3(new_transdata.x_pos, new_transdata.y_pos, new_transdata.z_pos);
+
         trans_timer += Time.deltaTime;
     }
 
