@@ -29,6 +29,11 @@ public class ResetAll : MonoBehaviour
         DataStorager.SaveStatus();
         NetworkClient.Disconnect();
         // Destroy(GameObject.Find("MultyScript"));
+        GameObject manager = GameObject.Find("MultyScript");
+        if (manager)
+        {
+            Destroy(manager);
+        }
         SceneManager.LoadScene("Initalize");
     }
 
@@ -47,6 +52,11 @@ public class ResetAll : MonoBehaviour
     }
 
     public void GoToMusic(){
+        GameObject manager = GameObject.Find("MultyScript");
+        if (manager)
+        {
+            Destroy(manager);
+        }
         SceneManager.LoadScene("MusicLobby");
     }
 }

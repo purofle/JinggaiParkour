@@ -123,6 +123,9 @@ public class SkinLoader : MonoBehaviour
         {
             AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
             SoundManager.boom_sound = clip;
+            foreach (var sound in FindObjectsOfType<CrashSound>()) {
+                sound.UpdateSound();
+            }
         }
     }
 
@@ -139,6 +142,9 @@ public class SkinLoader : MonoBehaviour
         {
             AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
             SoundManager.best_sound = clip;
+            foreach (var sound in FindObjectsOfType<BestSound>()) {
+                sound.UpdateSound();
+            }
         }
     }
 }

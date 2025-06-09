@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using kcp2k;
+using Mirror;
 using Newtonsoft.Json;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -28,6 +31,8 @@ public class LoadMaplist : MonoBehaviour
     public GameObject MapList;
     public GameObject EmptyInfo;
     public GameObject t_DisplayPanel;
+    public NetworkManager networkManager;
+    public TMP_InputField networkPort;
     public static GameObject DisplayPanel;
 
     static bool isDeleteState = false;
@@ -96,7 +101,7 @@ public class LoadMaplist : MonoBehaviour
                 beatmapInfos.Add(identify_key,new());
             }
             beatmapInfos[identify_key].Add(info);
-            Comparison<AnBeatmapInfo> sortComparison = (x, y) => x.level.CompareTo(y.level);
+            static int sortComparison(AnBeatmapInfo x, AnBeatmapInfo y) => x.level.CompareTo(y.level);
             beatmapInfos[identify_key].Sort(sortComparison);
         }
         bool init = false;
@@ -167,7 +172,24 @@ public class LoadMaplist : MonoBehaviour
         SceneManager.LoadScene("MusicGame");
     }
 
-    public static bool IsDeleting(){
+    public void SyncGameStart()
+    {
+        if (!int.TryParse(networkPort.text,out int port)){
+            port = 4782;
+        }
+        networkManager.GetComponent<KcpTransport>().port = (ushort)port;
+        try
+        {
+            networkManager.StartHost();
+        }
+        catch
+        {
+            networkManager.StartClient();
+        }
+    }
+
+    public static bool IsDeleting()
+    {
         return isDeleteState;
     }
 

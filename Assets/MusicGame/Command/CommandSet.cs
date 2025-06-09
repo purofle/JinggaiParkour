@@ -1,3 +1,4 @@
+using Mirror;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,12 +13,23 @@ public class CommandSet : MonoBehaviour
     public void Exit()
     {
         Time.timeScale = 1;
+        NetworkClient.Disconnect();
+        GameObject manager = GameObject.Find("NetworkManager");
+        if (manager)
+        {
+            Destroy(manager);
+        }
         SceneManager.LoadScene("MusicLobby");
     }
 
     public void GoToStart()
     {
-        SceneManager.LoadScene("Start");
+        GameObject manager = GameObject.Find("NetworkManager");
+        if (manager)
+        {
+            Destroy(manager);
+        }
+        SceneManager.LoadScene("Initalize");
     }
 
     public void GoToInstallPacks()

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BestSound : MonoBehaviour
 {
-    void Awake()
+    public void UpdateSound()
     {
         gameObject.GetComponent<AudioSource>().clip = SoundManager.best_sound;
     }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CrashSound : MonoBehaviour
 {
-    void Start()
+    public void UpdateSound()
     {
         gameObject.GetComponent<AudioSource>().clip = SoundManager.boom_sound;
     }

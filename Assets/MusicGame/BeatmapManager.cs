@@ -16,6 +16,8 @@ using static LevelDisplayer;
 
 public class BeatmapManager : MonoBehaviour
 {
+    public static BeatmapManager Instance;
+
     float OnPlayingTime = 0;
     float BeforeTime = 3;
     float iniOffset = 3;
@@ -241,7 +243,10 @@ public class BeatmapManager : MonoBehaviour
         {
             StartCoroutine(LoadMusic($"file://{dataFolder}/{beatmap_name}/music.mp3", AudioType.MPEG));
         }
-        ;
+        else if (File.Exists($"{dataFolder}/{beatmap_name}/music.ogg"))
+        {
+            StartCoroutine(LoadMusic($"file://{dataFolder}/{beatmap_name}/music.ogg", AudioType.OGGVORBIS));
+        }
         // 读取图片或视频
         if (File.Exists($"{dataFolder}/{beatmap_name}/bg.mp4"))
         {
@@ -486,6 +491,8 @@ public class BeatmapManager : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
+
         Application.targetFrameRate = 300;
 
         dataFolder = $"{Application.persistentDataPath}/music";
