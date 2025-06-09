@@ -180,10 +180,12 @@ public class LoadMaplist : MonoBehaviour
         networkManager.GetComponent<KcpTransport>().port = (ushort)port;
         try
         {
+            NetworkServer.Shutdown();
             networkManager.StartHost();
         }
         catch
         {
+            NetworkClient.Shutdown();
             networkManager.StartClient();
         }
     }

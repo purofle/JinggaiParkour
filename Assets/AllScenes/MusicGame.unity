@@ -7045,6 +7045,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 73baceaefabd5804ca20405340366a0b, type: 2}
   - {fileID: 11400000, guid: 62d1df1e88348314098be1d0c2c6fd66, type: 2}
   - {fileID: 11400000, guid: e29d6972065cec34cb2a35b42e903afb, type: 2}
+  RankingText: {fileID: 1486944794}
+  RankingList: {fileID: 1991916543}
 --- !u!1 &1500601697
 GameObject:
   m_ObjectHideFlags: 0
@@ -17856,8 +17858,6 @@ MonoBehaviour:
   RetryButton: {fileID: 795137873}
   RetryBigButton: {fileID: 1500601697}
   PracticeButton: {fileID: 94692283}
-  RankingText: {fileID: 1486944794}
-  RankingList: {fileID: 1991916543}
 --- !u!4 &6509085065113518777
 Transform:
   m_ObjectHideFlags: 0

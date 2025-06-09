@@ -10,8 +10,6 @@ public class SyncController : NetworkBehaviour
     public GameObject RetryButton;
     public GameObject RetryBigButton;
     public GameObject PracticeButton;
-    public GameObject RankingText;
-    public GameObject RankingList;
 
     void Start()
     {
@@ -21,11 +19,6 @@ public class SyncController : NetworkBehaviour
             RetryButton.SetActive(false);
             PracticeButton.SetActive(false);
             RetryBigButton.SetActive(false);
-        }
-        else
-        {
-            RankingText.SetActive(false);
-            RankingList.SetActive(false);
         }
         if (isServer)
         {

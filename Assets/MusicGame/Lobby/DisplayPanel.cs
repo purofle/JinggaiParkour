@@ -59,7 +59,7 @@ public class DisplayPanel : MonoBehaviour
         string record_path = $"{Application.persistentDataPath}/record/{BeatmapInfo.beatmap_name}.dat";
         for (int j = 0; j < recordItemFather.transform.childCount; j++)
         {
-            Destroy(recordItemFather.transform.GetChild(0).gameObject);
+            DestroyImmediate(recordItemFather.transform.GetChild(0).gameObject);
         }
         if (File.Exists(record_path))
         {

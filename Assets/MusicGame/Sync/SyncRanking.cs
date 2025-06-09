@@ -10,16 +10,26 @@ public class SyncRanking : MonoBehaviour
     public TMP_Text score_list;
 
     public TMP_ColorGradient[] gradients;
+    public GameObject RankingText;
+    public GameObject RankingList;
 
     float now_score;
     List<float> all_score = new();
+
+    void Start()
+    {
+        if (NetworkManager.singleton.mode == NetworkManagerMode.Offline)
+        {
+            RankingList.SetActive(false);
+            RankingText.SetActive(false);
+        }
+    }
 
     void Update()
     {
         all_score.Clear();
         foreach (PlayerInfo playerInfo in FindObjectsOfType<PlayerInfo>())
         {
-            Debug.Log(all_score);
             all_score.Add(playerInfo.achievement * 100);
             if (playerInfo.isLocalPlayer)
             {

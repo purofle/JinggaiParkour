@@ -12,18 +12,13 @@ public class LandGenerator : MonoBehaviour
     public const int LAND_LENGTH = 80;
     public const int OFFSET = 30;
     public const int PRE_OFFSET = 200;
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
     public void RespawnLand()
     {
         land_count = -1;
         for (int i = 0; i < land_parent.transform.childCount; i++)
         {
-            Destroy(land_parent.transform.GetChild(0).gameObject);
+            DestroyImmediate(land_parent.transform.GetChild(0).gameObject);
         }
     }
 

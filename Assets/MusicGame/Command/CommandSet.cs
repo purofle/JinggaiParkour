@@ -13,11 +13,12 @@ public class CommandSet : MonoBehaviour
     public void Exit()
     {
         Time.timeScale = 1;
-        NetworkClient.Disconnect();
+        NetworkClient.Shutdown();
+        NetworkServer.Shutdown();
         GameObject manager = GameObject.Find("NetworkManager");
         if (manager)
         {
-            Destroy(manager);
+            DestroyImmediate(manager);
         }
         SceneManager.LoadScene("MusicLobby");
     }
