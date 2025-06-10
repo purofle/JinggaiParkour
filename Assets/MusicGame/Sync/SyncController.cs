@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Mirror;
+using Mirror.Discovery;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,6 +23,7 @@ public class SyncController : NetworkBehaviour
         }
         if (isServer)
         {
+            FindObjectOfType<NetworkDiscovery>().AdvertiseServer();
             triggerButton.SetActive(true);
         }
     }

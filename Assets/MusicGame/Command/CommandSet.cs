@@ -1,4 +1,5 @@
 using Mirror;
+using Mirror.Discovery;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -18,6 +19,7 @@ public class CommandSet : MonoBehaviour
         GameObject manager = GameObject.Find("NetworkManager");
         if (manager)
         {
+            manager.GetComponent<NetworkDiscovery>().StopDiscovery();
             DestroyImmediate(manager);
         }
         SceneManager.LoadScene("MusicLobby");

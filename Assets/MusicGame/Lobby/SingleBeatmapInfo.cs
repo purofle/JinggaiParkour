@@ -77,7 +77,7 @@ public class SingleBeatmapInfo : MonoBehaviour
     }
     void GetReady(string path){
         BeatmapInfo.beatmap_name = path;
-        LoadMaplist.OpenDisplayPanel();
+        LoadMaplist.instance.OpenDisplayPanel();
     }
 
     void DeleteMap(string path, bool reload = true){

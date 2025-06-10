@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using kcp2k;
 using Mirror;
+using Mirror.Discovery;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
@@ -13,6 +14,7 @@ using static LevelDisplayer;
 
 public class LoadMaplist : MonoBehaviour
 {
+    public static LoadMaplist instance;
     public struct AnBeatmapInfo
     {
         public string path;
@@ -32,21 +34,28 @@ public class LoadMaplist : MonoBehaviour
     public GameObject EmptyInfo;
     public GameObject t_DisplayPanel;
     public NetworkManager networkManager;
+    public TMP_InputField networkIP;
     public TMP_InputField networkPort;
+    public TMP_Dropdown networkDropdown;
     public static GameObject DisplayPanel;
 
     static bool isDeleteState = false;
     public Text deleteStateButtonText;
 
-    private void Awake() {
+    private void Awake()
+    {
+        instance = this;
         DisplayPanel = t_DisplayPanel;
         dataFolder = $"{Application.persistentDataPath}/music";
-        if(!Directory.Exists(dataFolder)){
+        if (!Directory.Exists(dataFolder))
+        {
             Directory.CreateDirectory(dataFolder);
         }
         string[] subfolderPaths = Directory.GetDirectories(dataFolder, "*", SearchOption.TopDirectoryOnly);
-        foreach (string path in subfolderPaths){
-            if(!File.Exists($"{path}/data.sdz")){
+        foreach (string path in subfolderPaths)
+        {
+            if (!File.Exists($"{path}/data.sdz"))
+            {
                 continue;
             }
             string folderName = Path.GetFileName(path);
@@ -97,44 +106,53 @@ public class LoadMaplist : MonoBehaviour
                 }
             }
             string identify_key = info.title + info.author + info.mapper;
-            if(!beatmapInfos.ContainsKey(identify_key)){
-                beatmapInfos.Add(identify_key,new());
+            if (!beatmapInfos.ContainsKey(identify_key))
+            {
+                beatmapInfos.Add(identify_key, new());
             }
             beatmapInfos[identify_key].Add(info);
             static int sortComparison(AnBeatmapInfo x, AnBeatmapInfo y) => x.level.CompareTo(y.level);
             beatmapInfos[identify_key].Sort(sortComparison);
         }
         bool init = false;
-        foreach (List<AnBeatmapInfo> infos in beatmapInfos.Values){
+        foreach (List<AnBeatmapInfo> infos in beatmapInfos.Values)
+        {
             GameObject item;
             var info = infos[0];
-            if(!init){
+            if (!init)
+            {
                 item = SingleItem;
                 init = true;
-            } else {
+            }
+            else
+            {
                 item = Instantiate(SingleItem, MapList.transform);
             }
             item.GetComponent<SingleBeatmapInfo>().beatmapInfos = infos;
             item.GetComponent<SingleBeatmapInfo>().diff_index = 0;
             item.GetComponent<SingleBeatmapInfo>().LoadBeatmapInfo();
-            if(File.Exists($"{dataFolder}/{info.path}/special_bar.png")){
+            if (File.Exists($"{dataFolder}/{info.path}/special_bar.png"))
+            {
                 byte[] fileData = File.ReadAllBytes($"{dataFolder}/{info.path}/special_bar.png");
                 Texture2D texture = new Texture2D(2, 2);
                 texture.LoadImage(fileData);
                 item.GetComponent<SingleBeatmapInfo>().SetBackground(texture, 1);
-            } else if (File.Exists($"{dataFolder}/{info.path}/left_special_bar.png"))
+            }
+            else if (File.Exists($"{dataFolder}/{info.path}/left_special_bar.png"))
             {
                 byte[] fileData = File.ReadAllBytes($"{dataFolder}/{info.path}/left_special_bar.png");
                 Texture2D texture = new Texture2D(2, 2);
                 texture.LoadImage(fileData);
                 item.GetComponent<SingleBeatmapInfo>().SetBackground(texture, 1, SingleBeatmapInfo.Margin_Type.LEFT);
-            } else if (File.Exists($"{dataFolder}/{info.path}/right_special_bar.png"))
+            }
+            else if (File.Exists($"{dataFolder}/{info.path}/right_special_bar.png"))
             {
                 byte[] fileData = File.ReadAllBytes($"{dataFolder}/{info.path}/right_special_bar.png");
                 Texture2D texture = new Texture2D(2, 2);
                 texture.LoadImage(fileData);
                 item.GetComponent<SingleBeatmapInfo>().SetBackground(texture, 1, SingleBeatmapInfo.Margin_Type.RIGHT);
-            } else if (File.Exists($"{dataFolder}/{info.path}/bg.png"))
+            }
+            else if (File.Exists($"{dataFolder}/{info.path}/bg.png"))
             {
                 byte[] fileData = File.ReadAllBytes($"{dataFolder}/{info.path}/bg.png");
                 Texture2D texture = new Texture2D(2, 2);
@@ -152,30 +170,48 @@ public class LoadMaplist : MonoBehaviour
 
     void Update()
     {
-        if(!isDeleteState){
+        if (!isDeleteState)
+        {
             deleteStateButtonText.text = "删除谱面";
-        } else {
+        }
+        else
+        {
             deleteStateButtonText.text = "取消删除";
         }
     }
 
-    public static void OpenDisplayPanel(){
+    public void OpenDisplayPanel()
+    {
+        networkManager.GetComponent<NetworkDis>().ClearUrls();
+        networkDropdown.ClearOptions();
+        networkManager.GetComponent<NetworkDiscovery>().StartDiscovery();
         DisplayPanel.SetActive(true);
         DisplayPanel.GetComponent<DisplayPanel>().LoadPanel();
     }
 
-    public static void TurnOffDisplayPanel(){
+    public static void TurnOffDisplayPanel()
+    {
         DisplayPanel.SetActive(false);
     }
 
-    public static void GameStart(){
+    public static void GameStart()
+    {
         SceneManager.LoadScene("MusicGame");
     }
 
     public void SyncGameStart()
     {
-        if (!int.TryParse(networkPort.text,out int port)){
+        if (!int.TryParse(networkPort.text, out int port))
+        {
             port = 4782;
+        }
+        if (networkIP.text.Length <= 0)
+        {
+            networkManager.networkAddress = "localhost";
+        }
+        else
+        {
+            networkManager.networkAddress = networkIP.text;
         }
         networkManager.GetComponent<KcpTransport>().port = (ushort)port;
         try
@@ -186,6 +222,7 @@ public class LoadMaplist : MonoBehaviour
         catch
         {
             NetworkClient.Shutdown();
+            networkManager.GetComponent<NetworkDiscovery>().StopDiscovery();
             networkManager.StartClient();
         }
     }
@@ -195,7 +232,15 @@ public class LoadMaplist : MonoBehaviour
         return isDeleteState;
     }
 
-    public static void ChangeDeleteState(){
+    public static void ChangeDeleteState()
+    {
         isDeleteState = !isDeleteState;
+    }
+
+    public void UpdateIpValue()
+    {
+        string[] address = networkDropdown.options[networkDropdown.value].text.Split(":");
+        networkIP.text = address[0];
+        networkPort.text = address[1];
     }
 }
