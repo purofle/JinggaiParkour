@@ -199,7 +199,7 @@ public class LoadMaplist : MonoBehaviour
         SceneManager.LoadScene("MusicGame");
     }
 
-    public void SyncGameStart()
+    public void SyncGameStart(bool host)
     {
         if (!int.TryParse(networkPort.text, out int port))
         {
@@ -214,16 +214,16 @@ public class LoadMaplist : MonoBehaviour
             networkManager.networkAddress = networkIP.text;
         }
         networkManager.GetComponent<KcpTransport>().port = (ushort)port;
-        try
-        {
-            NetworkServer.Shutdown();
-            networkManager.StartHost();
-        }
-        catch
+        if(!host)
         {
             NetworkClient.Shutdown();
             networkManager.GetComponent<NetworkDiscovery>().StopDiscovery();
             networkManager.StartClient();
+        }
+        else
+        {
+            NetworkServer.Shutdown();
+            networkManager.StartHost();
         }
     }
 
