@@ -14,7 +14,6 @@ public class Land : MonoBehaviour
     void Update()
     {
         if(transform.position.z - dunzi.transform.position.z < -20 && destoryable){
-            Debug.Log(transform.position.z - dunzi.transform.position.z);
             Destroy(gameObject);
         }
     }

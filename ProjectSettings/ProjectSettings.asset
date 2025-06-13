@@ -139,9 +139,10 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 1.4.0
+  bundleVersion: 3.3.6
   preloadedAssets:
   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 11400000, guid: 9f9b6491a8acbdf4faaabb46fecd7c20, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -163,8 +164,8 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   applicationIdentifier:
     Android: com.mixbadgun.shidunzi
-    Standalone: com.Unity-Technologies.com.unity.template.urp-blank
-    iPhone: com.Unity-Technologies.com.unity.template.urp-blank
+    Standalone: com.mixbadgun.shidunzi
+    iPhone: com.mixbadgun.shidunzi
   buildNumber:
     Standalone: 0
     VisionOS: 0
@@ -246,7 +247,7 @@ PlayerSettings:
   iOSManualSigningProvisioningProfileType: 0
   tvOSManualSigningProvisioningProfileType: 0
   VisionOSManualSigningProvisioningProfileType: 0
-  appleEnableAutomaticSigning: 0
+  appleEnableAutomaticSigning: 1
   iOSRequireARKit: 0
   iOSAutomaticallyDetectAndAddCapabilities: 1
   appleEnableProMotion: 0
@@ -827,10 +828,25 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: MIRROR;MIRROR_81_OR_NEWER;MIRROR_82_OR_NEWER;MIRROR_83_OR_NEWER;MIRROR_84_OR_NEWER;MIRROR_85_OR_NEWER;MIRROR_86_OR_NEWER;MIRROR_89_OR_NEWER;MIRROR_90_OR_NEWER;MIRROR_93_OR_NEWER;EDGEGAP_PLUGIN_SERVERS
-    Standalone: MIRROR;MIRROR_81_OR_NEWER;MIRROR_82_OR_NEWER;MIRROR_83_OR_NEWER;MIRROR_84_OR_NEWER;MIRROR_85_OR_NEWER;MIRROR_86_OR_NEWER;MIRROR_89_OR_NEWER;MIRROR_90_OR_NEWER;MIRROR_93_OR_NEWER;EDGEGAP_PLUGIN_SERVERS
-    iPhone: MIRROR;MIRROR_81_OR_NEWER;MIRROR_82_OR_NEWER;MIRROR_83_OR_NEWER;MIRROR_84_OR_NEWER;MIRROR_85_OR_NEWER;MIRROR_86_OR_NEWER;MIRROR_89_OR_NEWER;MIRROR_90_OR_NEWER;MIRROR_93_OR_NEWER;EDGEGAP_PLUGIN_SERVERS
-  additionalCompilerArguments: {}
+    Android: MIRROR;MIRROR_81_OR_NEWER;MIRROR_82_OR_NEWER;MIRROR_83_OR_NEWER;MIRROR_84_OR_NEWER;MIRROR_85_OR_NEWER;MIRROR_86_OR_NEWER;MIRROR_89_OR_NEWER;MIRROR_90_OR_NEWER;MIRROR_93_OR_NEWER;EDGEGAP_PLUGIN_SERVERS;DOTWEEN
+    EmbeddedLinux: DOTWEEN
+    GameCoreScarlett: DOTWEEN
+    GameCoreXboxOne: DOTWEEN
+    LinuxHeadlessSimulation: DOTWEEN
+    Nintendo Switch: DOTWEEN
+    PS4: DOTWEEN
+    PS5: DOTWEEN
+    QNX: DOTWEEN
+    Stadia: DOTWEEN
+    Standalone: MIRROR;MIRROR_81_OR_NEWER;MIRROR_82_OR_NEWER;MIRROR_83_OR_NEWER;MIRROR_84_OR_NEWER;MIRROR_85_OR_NEWER;MIRROR_86_OR_NEWER;MIRROR_89_OR_NEWER;MIRROR_90_OR_NEWER;MIRROR_93_OR_NEWER;EDGEGAP_PLUGIN_SERVERS;DOTWEEN
+    VisionOS: DOTWEEN
+    WebGL: DOTWEEN
+    Windows Store Apps: DOTWEEN
+    XboxOne: DOTWEEN
+    iPhone: MIRROR;MIRROR_81_OR_NEWER;MIRROR_82_OR_NEWER;MIRROR_83_OR_NEWER;MIRROR_84_OR_NEWER;MIRROR_85_OR_NEWER;MIRROR_86_OR_NEWER;MIRROR_89_OR_NEWER;MIRROR_90_OR_NEWER;MIRROR_93_OR_NEWER;EDGEGAP_PLUGIN_SERVERS;DOTWEEN
+    tvOS: DOTWEEN
+  additionalCompilerArguments:
+    iPhone: []
   platformArchitecture: {}
   scriptingBackend:
     Android: 1

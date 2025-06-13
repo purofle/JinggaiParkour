@@ -42,7 +42,9 @@ public class Move : MonoBehaviour
     private float all_timer = 0;
     private int life = 1;
     private float offsetMiles = 0;
-    private FromTo movement;
+    private List<FromTo> movementList = new();
+    
+	private float maxReachedSpeed = 0; // 最大速度显示
 
     private float move_timer = 0f; // 计时器
     // Star is called once before the first execution of Update after the MonoBehaviour is created
@@ -67,6 +69,12 @@ public class Move : MonoBehaviour
     public Vector3 GetVelocity(){
         return velocity;
     }
+
+    	
+	public float GetDisplaySpeed(){
+		maxReachedSpeed = Math.Max(GetVelocity().z,maxReachedSpeed);
+		return maxReachedSpeed;
+	}
 
     public void AddOffsetMiles(float miles){
         offsetMiles += miles;
@@ -151,7 +159,7 @@ public class Move : MonoBehaviour
 
     public class FromTo
     {
-        // Fields
+        public int fingerId;
         public Vector2 first;
         public Vector2 second;
     }
@@ -192,17 +200,35 @@ public class Move : MonoBehaviour
 
     void handleFingerInput()
     {
+        // 还是保持和音游判定相同了。
         foreach (Touch touch in Input.touches)
         {
             if (touch.phase == TouchPhase.Began)
             {
-                movement = new FromTo();
-                movement.first = touch.position;
+                FromTo movement = new()
+                {
+                    fingerId = touch.fingerId,
+                    first = touch.position
+                };
+                movementList.Add(movement);
             }
-            if (touch.phase == TouchPhase.Ended)
+            if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Ended)
             {
-                movement.second = touch.position;
-                CalcAndResponse(movement);
+
+                for (int k = 0; k < movementList.Count; k++)
+                {
+                    FromTo movement = movementList[k];
+                    if (movement.fingerId == touch.fingerId)
+                    {
+                        movement.second = touch.position;
+                        if (Vector2.Distance(movement.first, movement.second) > 25 || touch.phase == TouchPhase.Ended)
+                        {
+                            CalcAndResponse(movement);
+                            movementList.RemoveAt(k);
+                            k--;
+                        }
+                    }
+                }
             }
         }
     }
@@ -235,28 +261,28 @@ public class Move : MonoBehaviour
         //         moveUp();
         //     }
         // }
-        KeyCode[] leftKeys = {KeyCode.A,KeyCode.LeftArrow};
+        KeyCode[] leftKeys = DataStorager.keysettings.left;
         foreach( KeyCode key in leftKeys ){
             if(Input.GetKeyDown(key)){
                  moveLeft();
             }
         }
 
-        KeyCode[] rightKeys = {KeyCode.D,KeyCode.RightArrow};
+        KeyCode[] rightKeys = DataStorager.keysettings.right;
         foreach( KeyCode key in rightKeys ){
             if(Input.GetKeyDown(key)){
                  moveRight();
             }
         }
 
-        KeyCode[] upKeys = {KeyCode.Space,KeyCode.W,KeyCode.UpArrow};
+        KeyCode[] upKeys = DataStorager.keysettings.up;
         foreach( KeyCode key in upKeys ){
             if(Input.GetKeyDown(key)){
                  moveUp();
             }
         }
 
-        KeyCode[] downKeys = {KeyCode.DownArrow,KeyCode.S};
+        KeyCode[] downKeys = DataStorager.keysettings.down;
         foreach( KeyCode key in downKeys ){
             if(Input.GetKeyDown(key)){
                  moveDown();

@@ -211,6 +211,40 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     path: ExitButton
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: {x: 0, y: 0, z: 1}
+        inSlope: {x: 5.6885085, y: 5.854197, z: 0}
+        outSlope: {x: 5.6885085, y: 5.854197, z: 0}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.043972258, y: 0.040589776, z: 0.33333334}
+      - serializedVersion: 3
+        time: 0.71666664
+        value: {x: 1, y: 1, z: 1}
+        inSlope: {x: -0.2954642, y: -0.25838947, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.25416288, y: 0.096877486, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 0.81666666
+        value: {x: 1, y: 1, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: PointDetail
   m_FloatCurves:
   - serializedVersion: 2
     curve:
@@ -387,6 +421,15 @@ AnimationClip:
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
       path: 2341044831
+      attribute: 3
+      script: {fileID: 0}
+      typeID: 4
+      customType: 0
+      isPPtrCurve: 0
+      isIntCurve: 0
+      isSerializeReferenceCurve: 0
+    - serializedVersion: 2
+      path: 2252052861
       attribute: 3
       script: {fileID: 0}
       typeID: 4
@@ -1109,6 +1152,96 @@ AnimationClip:
       m_RotationOrder: 4
     attribute: m_LocalScale.z
     path: ExitButton
+    classID: 224
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 5.6885085
+        outSlope: 5.6885085
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.043972258
+      - serializedVersion: 3
+        time: 0.71666664
+        value: 1
+        inSlope: -0.2954642
+        outSlope: -0.2954642
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.25416288
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalScale.x
+    path: PointDetail
+    classID: 224
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 5.854197
+        outSlope: 5.854197
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.040589776
+      - serializedVersion: 3
+        time: 0.71666664
+        value: 1
+        inSlope: -0.25838947
+        outSlope: -0.25838947
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.096877486
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalScale.y
+    path: PointDetail
+    classID: 224
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.81666666
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalScale.z
+    path: PointDetail
     classID: 224
     script: {fileID: 0}
     flags: 0

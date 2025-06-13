@@ -54,7 +54,7 @@
                     "name": "Jump",
                     "type": "Button",
                     "id": "f1ba0d36-48eb-4cd5-b651-1c94a6531f70",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -85,6 +85,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "New action",
+                    "type": "Value",
+                    "id": "d1205a3f-c957-4444-89a8-82613d384e15",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -470,6 +479,28 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Crouch",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e81957ce-ce4a-4b1f-82cc-98b0ad5a3407",
+                    "path": "<Keyboard>/leftArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e18b949d-a1ac-46e6-a71d-80dcb935d676",
+                    "path": "<Joystick>/stick/y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

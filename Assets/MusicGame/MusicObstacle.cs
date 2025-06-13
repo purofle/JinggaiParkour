@@ -1,33 +1,61 @@
 using System;
+using System.Linq;
 using Lofelt.NiceVibrations;
 using UnityEngine;
 
 public class MusicObstacle : MonoBehaviour
 {
+    public int index = 0;
+    public float size = 1;
     private bool isTouched = false;
-    private bool isPerfect = false;
+    // private bool isPerfect = false;
     private bool isInit = true;
+    private bool isShow = false;
     private bool isLast = false;
     public bool isBest = false;
-    private float last_frame_pos_z = 0;
+    bool forcePerfect = false;
+    public int[] track;
     public GameObject player;
     public GameObject camera;
     public GameObject perfectboom;
     public GameObject greatboom;
+    public GameObject showboom;
     public AudioSource bestSound;
+    public GameObject boomSounds;
     public BeatmapManager beatmapManager;
     // Start is called before the first frame update
     void Start()
     {
-        
+        if(DataStorager.settings.cinemaMod || track.Count() <= 0 || isShow){
+            isTouched = true;
+            forcePerfect = true;
+        }
+
+        // 愚人节彩蛋
+        if(DateTime.Now.Day == 1 && DateTime.Now.Month == 4){
+            isTouched = true;
+            forcePerfect = true;
+        }
     }
 
     void GenerateBoom(GameObject theboom){
         camera.GetComponent<MusicCamera>().triggerShake();
         var newboom = Instantiate(theboom);
-        newboom.transform.position = gameObject.transform.position + new Vector3(0,2.5f,0);
+        newboom.transform.position = gameObject.transform.position + new Vector3(0,2.5f,0) * size;
+        newboom.transform.localScale *= size;
 
-        if(isBest){
+        // 愚人节彩蛋
+        if (DateTime.Now.Day == 1 && DateTime.Now.Month == 4)
+        {
+            newboom.transform.localScale *= 100;
+            newboom.transform.position += new Vector3(0, 0, 20) * player.GetComponent<Player>().GetVelocity() / 50;
+        }
+
+        // 播放声音
+        boomSounds.transform.GetChild(index % boomSounds.transform.childCount).GetComponent<AudioSource>().volume = Math.Min(size, 2);
+        boomSounds.transform.GetChild(index % boomSounds.transform.childCount).GetComponent<AudioSource>().Play();
+        if (isBest)
+        {
             bestSound.Play();
         }
 
@@ -41,8 +69,12 @@ public class MusicObstacle : MonoBehaviour
         isInit = false;
     }
 
-     public void setBestNote(){
+    public void setBestNote(){
         isBest = true;
+    }
+
+    public void setShowNote(){
+        isShow = true;
     }
 
     public void setLastNote(){
@@ -53,66 +85,92 @@ public class MusicObstacle : MonoBehaviour
         beatmapManager.triggerEnd();
     }
 
+    bool isOnTrack() {
+        if(track.Contains(player.GetComponent<Player>().GetNowTrack())){
+            return true;
+        }
+        foreach(var inputImp in player.GetComponent<Player>().inputImpluses){
+            if(track.Contains(inputImp.track)){
+                player.GetComponent<Player>().inputImpluses.Remove(inputImp);
+                return true;
+            }
+        }
+        return false;
+    }
+
     // Update is called once per frame
     void FixedUpdate()
     {
         if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 2 * (player.GetComponent<Player>().GetVelocity() / 50)
-          && Math.Abs(player.transform.position.x - gameObject.transform.position.x) < 1
+          && isOnTrack()
           && Math.Abs(player.transform.position.y - gameObject.transform.position.y) < 2
         ){
             isTouched = true;
         }
         // 下落墩子也可以
-        if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 3 * (player.GetComponent<Player>().GetVelocity() / 50) && player.GetComponent<Player>().isDroping()
-            && Math.Abs(player.transform.position.x - gameObject.transform.position.x) < 0.1
+        if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 3.5 * (player.GetComponent<Player>().GetVelocity() / 50)
+            && player.GetComponent<Player>().isDroping()
+            && isOnTrack()
             && player.transform.position.y >= gameObject.transform.position.y
         ){
             isTouched = true;
-            if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 2 * (player.GetComponent<Player>().GetVelocity() / 50)){
-                isPerfect = true;
-            };
-        }
-        if( Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 1.5 * (player.GetComponent<Player>().GetVelocity() / 50)
-            && Math.Abs(player.transform.position.x - gameObject.transform.position.x) < 1
-            && Math.Abs(player.transform.position.y - gameObject.transform.position.y) < 1.5
-        ){
-            isPerfect = true;
         }
 
-        // 帧率过低的优化
-        if(player.transform.position.z >= gameObject.transform.position.z && player.transform.position.y < 0.1 && gameObject.transform.position.y < 1){
-            if(last_frame_pos_z < gameObject.transform.position.z){
-                if(Math.Abs(player.transform.position.x - gameObject.transform.position.x) < 0.1){
-                    isTouched = true;
-                    if(Math.Abs(player.transform.position.z - gameObject.transform.position.z) < 1.5 * (player.GetComponent<Player>().GetVelocity() / 50)){
-                        isPerfect = true;
-                    };
+        if(player.transform.position.z >= gameObject.transform.position.z && isTouched && !isInit)
+        {
+            if(player.transform.position.z - gameObject.transform.position.z <= 1.25 * (player.GetComponent<Player>().GetVelocity() / 50) || forcePerfect){
+                // Perfect
+                if (!isShow)
+                {
+                    GenerateBoom(perfectboom);
                 }
-            }
-        }
+                else
+                {
+                    GenerateBoom(showboom);
+                }
 
-        if(player.transform.position.z >= gameObject.transform.position.z && isTouched && !isInit){
-            if(isPerfect){
-                GenerateBoom(perfectboom);
-                beatmapManager.AddNowPoint(1);
+                beatmapManager.AddNowPoint(BeatmapManager.M_TYPE.Perfect,!isShow);
                 if(isBest){
-                    beatmapManager.AddNowBest(1);
+                    beatmapManager.AddNowBest(BeatmapManager.M_TYPE.Break_P,!isShow);
                 }
+                if(isLast){
+                    triggerEnd();
+                }
+                Destroy(gameObject);
+                return;
             } else {
-                GenerateBoom(greatboom);
-                beatmapManager.AddNowPoint(0.95f);
-                if(isBest){
-                    beatmapManager.AddNowBest(0.95f);
+                // Great
+                {
+                    if (!isShow)
+                    {
+                        GenerateBoom(greatboom);
+                    }
+                    else
+                    {
+                        GenerateBoom(showboom);
+                    }
+
+                    beatmapManager.AddNowPoint(BeatmapManager.M_TYPE.Great,!isShow);
+                    if(isBest){
+                        beatmapManager.AddNowBest(BeatmapManager.M_TYPE.Break_G,!isShow);
+                    }
+                    if(isLast){
+                        triggerEnd();
+                    }
+                    Destroy(gameObject);
+                    return;
                 }
             }
-            if(isLast){
-                triggerEnd();
-            }
-            Destroy(gameObject);
-            return;
         }
-        if(player.transform.position.z - gameObject.transform.position.z > 10 && !isInit){
+
+
+        if(player.transform.position.z - gameObject.transform.position.z > 10 * (player.GetComponent<Player>().GetVelocity() / 50)
+            && !isInit){
             // GenerateBoom();
+            beatmapManager.AddNowPoint(BeatmapManager.M_TYPE.Miss,!isShow);
+            if(isBest){
+                beatmapManager.AddNowBest(BeatmapManager.M_TYPE.Break_M,!isShow);
+            }
             beatmapManager.Miss();
             if(isLast){
                 triggerEnd();
@@ -120,6 +178,5 @@ public class MusicObstacle : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        last_frame_pos_z = player.transform.position.z;
     }
 }

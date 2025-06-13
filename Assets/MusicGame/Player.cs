@@ -1,9 +1,15 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
+using static InputStruct;
 
 public class Player : MonoBehaviour
 {
+    public static Player targetPlayer;
+
     public GameObject center;
     private Vector3 velocity;
     public int now_track = 2;
@@ -24,14 +30,52 @@ public class Player : MonoBehaviour
     public float cross_time = MAX_CROSS_TIME;
     private bool isFlying = false;
     private List<FromTo> movementList = new();
-    void Awake(){
+
+    public List<InputImpluse> inputImpluses = new();
+
+    void CreateNewInputImpluse(int num) {
+        inputImpluses.Add(
+            new InputImpluse(){
+                track = num,
+                time = Time.fixedTime
+            }
+        );
+    }
+
+    void inputUpdate() {
+        while(inputImpluses.Count > 0){
+            if(Time.fixedTime - inputImpluses[0].time <= 0.1){
+                break;
+            }
+            inputImpluses.RemoveAt(0);
+        }
+    }
+
+    void Awake()
+    {
         float speed = DataStorager.settings.MusicGameSpeed > 0 ? DataStorager.settings.MusicGameSpeed : 1;
         velocity.z = 50 * speed;
+        targetPlayer = this;
+    }
+
+    IEnumerator FixPos(){
+        while(true){
+            ChangePos();
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
+    public void ChangePos()
+    {
+        Vector3 pos = transform.position;
+        pos.z = beatmapManager.GetPlayingTime() * velocity.z;
+        transform.position = pos;
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        StartCoroutine(FixPos());
         updateGravity();
     }
 
@@ -47,6 +91,7 @@ public class Player : MonoBehaviour
     void FixedUpdate(){
         all_timer += Time.fixedDeltaTime;
 
+        inputUpdate();
         updatePosHorizon();
 
         // 着地
@@ -74,6 +119,10 @@ public class Player : MonoBehaviour
             handleNumInput();
         }
         updateGravity();
+
+        if(DateTime.Now.Day == 1 && DateTime.Now.Month == 4){
+            transform.position = new Vector3(math.cos(Time.time * 40) * 3,1 + math.sin(Time.time * 40),transform.position.z);
+        }
     }
 
     public float GetVelocity()
@@ -145,6 +194,7 @@ public class Player : MonoBehaviour
         if (now_track > 1)
         {
             now_track -= 1;
+            CreateNewInputImpluse(now_track);
             toMoving = true;
         }
     }
@@ -153,6 +203,7 @@ public class Player : MonoBehaviour
         if (now_track < MAX_TRACKS)
         {
             now_track += 1;
+            CreateNewInputImpluse(now_track);
             toMoving = true;
         }
     }
@@ -162,14 +213,19 @@ public class Player : MonoBehaviour
         isDrop = true;
         checkGrouned();
         velocity -= new Vector3(0,(float)(gameObject.transform.position.y / 0.025),0);
+        CreateNewInputImpluse(now_track);
         gameObject.GetComponent<Animator>().SetTrigger("DownFlat");
     }
 
     public void setCrossTime(float crotime){
         if(crotime > 0){
-            cross_time = Math.Min(crotime, MAX_CROSS_TIME);
+            if(crotime > 0.01f){
+                cross_time = Math.Min(crotime, MAX_CROSS_TIME);
+            } else {
+                cross_time = 0.01f;
+            }
         } else {
-            cross_time = 0.001f;
+            cross_time = 0.01f;
         }
     }
 
@@ -228,16 +284,18 @@ public class Player : MonoBehaviour
                 };
                 movementList.Add(movement);
             }
-            if (touch.phase == TouchPhase.Ended)
+            if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Ended)
             {
 
                 for(int k = 0; k < movementList.Count; k++){
                     FromTo movement = movementList[k];
                     if(movement.fingerId == touch.fingerId){
                         movement.second = touch.position;
-                        CalcAndResponse(movement);
-                        movementList.RemoveAt(k);
-                        k--;
+                        if(Vector2.Distance(movement.first,movement.second) > 25 || touch.phase == TouchPhase.Ended){
+                            CalcAndResponse(movement);
+                            movementList.RemoveAt(k);
+                            k--;
+                        }
                     }
                 }
             }
@@ -245,21 +303,21 @@ public class Player : MonoBehaviour
     }
 
     void handleNumInput(){
-        KeyCode[] firstKeys = {KeyCode.Z,KeyCode.Keypad1,KeyCode.Alpha1};
+        KeyCode[] firstKeys = DataStorager.keysettings.pad1;
         foreach( KeyCode key in firstKeys ){
             if(Input.GetKeyDown(key)){
                  moveToIndex(1);
             }
         }
 
-        KeyCode[] secondKeys = {KeyCode.X,KeyCode.Keypad2,KeyCode.Alpha2};
+        KeyCode[] secondKeys = DataStorager.keysettings.pad2;
         foreach( KeyCode key in secondKeys ){
             if(Input.GetKeyDown(key)){
                  moveToIndex(2);
             }
         }
 
-        KeyCode[] thirdKeys = {KeyCode.C,KeyCode.Keypad3,KeyCode.Alpha3};
+        KeyCode[] thirdKeys = DataStorager.keysettings.pad3;
         foreach( KeyCode key in thirdKeys ){
             if(Input.GetKeyDown(key)){
                  moveToIndex(3);
@@ -269,33 +327,34 @@ public class Player : MonoBehaviour
 
     void moveToIndex(int index){
         now_track = index;
+        CreateNewInputImpluse(now_track);
         toMoving = true;
     }
 
     void handleKeyInput()
     {
-        KeyCode[] leftKeys = {KeyCode.A,KeyCode.LeftArrow};
+        KeyCode[] leftKeys = DataStorager.keysettings.left;
         foreach( KeyCode key in leftKeys ){
             if(Input.GetKeyDown(key)){
                  moveLeft();
             }
         }
 
-        KeyCode[] rightKeys = {KeyCode.D,KeyCode.RightArrow};
+        KeyCode[] rightKeys = DataStorager.keysettings.right;
         foreach( KeyCode key in rightKeys ){
             if(Input.GetKeyDown(key)){
                  moveRight();
             }
         }
 
-        KeyCode[] upKeys = {KeyCode.Space,KeyCode.W,KeyCode.UpArrow};
+        KeyCode[] upKeys = DataStorager.keysettings.up;
         foreach( KeyCode key in upKeys ){
             if(Input.GetKeyDown(key)){
                  moveUp();
             }
         }
 
-        KeyCode[] downKeys = {KeyCode.DownArrow,KeyCode.S};
+        KeyCode[] downKeys = DataStorager.keysettings.down;
         foreach( KeyCode key in downKeys ){
             if(Input.GetKeyDown(key)){
                  moveDown();

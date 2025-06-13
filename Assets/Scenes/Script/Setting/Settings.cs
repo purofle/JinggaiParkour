@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -15,8 +19,12 @@ public class Settings : MonoBehaviour
     public Toggle isAutoPlay;
     public Toggle notVibrate;
     public Toggle notBoomFX;
+    public Toggle notBeatmapSkin;
     public Toggle RelaxMod;
+    public Toggle CinemaMod;
     public InputField MusicGameOffsetMs;
+    public TMP_Dropdown SkinDropdown;
+    List<string> subfolders;
     void Awake(){
         MusicVolume.value = DataStorager.settings.MusicVolume;
         SoundVolume.value = DataStorager.settings.SoundVolume;
@@ -25,7 +33,9 @@ public class Settings : MonoBehaviour
         isAutoPlay.isOn = DataStorager.settings.isAutoPlay;
         notVibrate.isOn = DataStorager.settings.notVibrate;
         notBoomFX.isOn = DataStorager.settings.notBoomFX;
+        notBeatmapSkin.isOn = DataStorager.settings.notBeatmapSkin;
         RelaxMod.isOn = DataStorager.settings.relaxMod;
+        CinemaMod.isOn = DataStorager.settings.cinemaMod;
         MaxLife.text = DataStorager.maxLife.count.ToString();
         MusicGameOffsetMs.text = DataStorager.settings.offsetMs.ToString();
         if(DataStorager.settings.CustomMaxLife > 0){
@@ -38,6 +48,20 @@ public class Settings : MonoBehaviour
         } else {
             MusicGameSpeed.text = "1";
         }
+
+        // 皮肤
+        string skinFolder = $"{Application.persistentDataPath}/skin";
+        string[] subfolderPaths = Directory.GetDirectories(skinFolder, "*", SearchOption.TopDirectoryOnly);
+        for(int i = 0;i < subfolderPaths.Count(); i++){
+            subfolderPaths[i] = Path.GetFileName(subfolderPaths[i]);
+        }
+        subfolders = new(subfolderPaths);
+        SkinDropdown.AddOptions(subfolders);
+        if(subfolders.Contains(DataStorager.settings.skinPath)){
+            SkinDropdown.value = subfolders.IndexOf(DataStorager.settings.skinPath) + 1;
+        } else {
+            SkinDropdown.value = 0;
+        }
     }
 
     public void SaveAndExit(){
@@ -48,7 +72,9 @@ public class Settings : MonoBehaviour
         DataStorager.settings.notVibrate = notVibrate.isOn;
         DataStorager.settings.isAutoPlay = isAutoPlay.isOn;
         DataStorager.settings.notBoomFX = notBoomFX.isOn;
+        DataStorager.settings.notBeatmapSkin = notBeatmapSkin.isOn;
         DataStorager.settings.relaxMod = RelaxMod.isOn;
+        DataStorager.settings.cinemaMod = CinemaMod.isOn;
         if (!int.TryParse(CustomMaxLife.text, out int clife))
         {
             DataStorager.settings.CustomMaxLife = DataStorager.maxLife.count;
@@ -87,8 +113,11 @@ public class Settings : MonoBehaviour
         {
             DataStorager.settings.offsetMs = coffset;
         }
+        // 皮肤
+        DataStorager.settings.skinPath = SkinDropdown.options[SkinDropdown.value].text;
         // 保存
         DataStorager.SaveSettings();
+        DataStorager.SaveKeySettings();
         globalSettings.handleSettings();
         SceneManager.LoadScene("Initalize");
     }
